@@ -4,6 +4,28 @@
              xmlns:local="clr-namespace:OneTooCalendar"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <DataTemplate DataType="{x:Type local:SynchronizingCalendarViewModel}">
+             <TextBlock TextAlignment="Center" VerticalAlignment="Center">Synchronizing calendar. Please wait...</TextBlock>
+         </DataTemplate>
+        <DataTemplate DataType="{x:Type local:MainWindowViewModel}">
+            <ContentPresenter Content="{Binding CurrentView}"></ContentPresenter>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type local:CalendarViewModel}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <ContentPresenter Content="{Binding CalendarControlsBarViewModel}" Grid.Row="0"/>
+                <Grid Grid.Row="1" Background="Aqua">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ContentPresenter Content="{Binding CalendarWeekViewModel}" Grid.Column="0"/>
+                    <ContentPresenter Content="{Binding BacklogViewModel}" Grid.Column="1"/>
+                </Grid>
+            </Grid>
+        </DataTemplate>
     </Application.Resources>
 </Application>

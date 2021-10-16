@@ -15,7 +15,7 @@ namespace OneTooCalendar
     {
         public App()
         {
-            var oneTooCalLoader = new OneTooCalLoader();
+            
         }
     }
 

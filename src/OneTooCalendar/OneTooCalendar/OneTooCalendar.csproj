@@ -4,6 +4,11 @@
         <OutputType>WinExe</OutputType>
         <TargetFramework>net5.0-windows</TargetFramework>
         <UseWPF>true</UseWPF>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Google.Apis.Calendar.v3" Version="1.55.0.2410" />
+    </ItemGroup>
 
 </Project>
