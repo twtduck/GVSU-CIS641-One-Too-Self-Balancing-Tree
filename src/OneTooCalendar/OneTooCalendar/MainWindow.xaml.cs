@@ -37,62 +37,12 @@ namespace OneTooCalendar
 
         async Task InitializeApplicationAsync()
         {
-            await Task.Delay(TimeSpan.FromSeconds(10));
+            await Task.Delay(TimeSpan.FromSeconds(2));
             MainWindowViewModel.CurrentView = new CalendarViewModel();
         }
 
         public MainWindowViewModel MainWindowViewModel { get; } = new MainWindowViewModel();
     }
-
-    public class CalendarViewModel : ViewModelBase
-    {
-        private CalendarWeekViewModel _calendarWeekViewModel;
-        private CalendarControlsBarViewModel _calendarControlsBarViewModel;
-        private BacklogViewModel _backlogViewModel;
-
-        public CalendarViewModel()
-        {
-            _calendarWeekViewModel = new CalendarWeekViewModel();
-            _calendarControlsBarViewModel = new CalendarControlsBarViewModel();
-            _backlogViewModel = new BacklogViewModel();
-        }
-
-        public CalendarWeekViewModel CalendarWeekViewModel
-        {
-            get => _calendarWeekViewModel;
-            set
-            {
-                _calendarWeekViewModel = value;
-                OnPropertyChanged();
-            }
-        }
-        
-        public CalendarControlsBarViewModel CalendarControlsBarViewModel
-        {
-            get => _calendarControlsBarViewModel;
-            set
-            {
-                _calendarControlsBarViewModel = value;
-                OnPropertyChanged();
-            }
-        }
-        
-        public BacklogViewModel BacklogViewModel
-        {
-            get => _backlogViewModel;
-            set
-            {
-                _backlogViewModel = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public class BacklogViewModel : ViewModelBase { }
-
-    public class CalendarControlsBarViewModel : ViewModelBase { }
-
-    public class CalendarWeekViewModel : ViewModelBase { }
 
     public static class TaskExtensions
     {
