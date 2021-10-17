@@ -1,17 +1,24 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using Google.Apis.Calendar.v3.Data;
 
 namespace OneTooCalendar
 {
     public class CalendarWeekViewModel : ViewModelBase
     {
+        private readonly GoogleCalendarService _googleCalendarService;
         public const int DaysInAWeek = 7;
 
-        public CalendarWeekViewModel(DateTime startDate)
+        public CalendarWeekViewModel(DateTime startDate, GoogleCalendarService googleCalendarService)
         {
+            _googleCalendarService = googleCalendarService;
             for (var i = 0; i < DaysInAWeek; i++)
             {
                 DateViewModels.Add(new DateViewModel(startDate + TimeSpan.FromDays(i))
@@ -28,16 +35,29 @@ namespace OneTooCalendar
         public List<DateViewModel> DateViewModels { get; } = new();
 
         public List<HourLabelViewModel> TimeLabels =>
-            DateViewModels.First().HourPeriods
-            .Select(hourPeriod => new HourLabelViewModel(hourPeriod))
+            Enumerable.Range(0, 24)
+            .Select(hourNumber => new HourLabelViewModel(hourNumber))
             .ToList();
+
+        public async Task<bool> TryRefreshEventsAsync(CancellationToken token)
+        {
+            var events = await _googleCalendarService.GetEventsForDateRangeAsync(StartDate, StartDate.AddDays(DaysInAWeek), token);
+            if (events is null)
+                return false;
+            foreach (var dateViewModel in DateViewModels)
+            {
+                dateViewModel.UpdateFromEventsList(events);
+            }
+            return true;
+
+        }
     }
 
     public class HourLabelViewModel : ViewModelBase
     {
-        public HourLabelViewModel(HourPeriodViewModel hourPeriod)
+        public HourLabelViewModel(int hourNumber)
         {
-            LabelContent = hourPeriod.QuarterHourPeriods.First().ToString();
+            LabelContent = DateTime.Today.AddHours(hourNumber).ToShortTimeString();
         }
 
         public string LabelContent { get; }
@@ -50,18 +70,52 @@ namespace OneTooCalendar
         public DateViewModel(DateTime dateTime)
         {
             _dateTime = dateTime;
-            for (var hourTime = _dateTime; hourTime.Date == _dateTime; hourTime = hourTime.AddHours(1))
+
+            EventGridList = new ObservableCollection<Grid>(new[] { BuildEventGrid() });
+        }
+
+        private static Grid BuildEventGrid()
+        {
+            var eventGrid = new Grid();
+            for (int i = 0; i < 24 * 4; i++)
             {
-                HourPeriods.Add(new HourPeriodViewModel(hourTime));
+                eventGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(12) });
             }
+
+            for (int i = 0; i < 24 * 4; i++)
+            {
+                if (i % 4 == 0)
+                {
+                    var dividerGrid = new Grid();
+                    dividerGrid.SetValue(Grid.RowProperty, i);
+                    dividerGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1) });
+                    dividerGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(11) });
+                    var border = new Border
+                    {
+                        BorderBrush = ThemeCustomization.CalendarDivider,
+                        BorderThickness = new Thickness(0, 1, 0, 0)
+                    };
+                    border.SetValue(Grid.RowProperty, 0);
+                    dividerGrid.Children.Add(border);
+                    eventGrid.Children.Add(dividerGrid);
+                }
+            }
+
+            return eventGrid;
         }
 
         public string DayOfTheWeek => CultureInfo.CurrentUICulture.DateTimeFormat.AbbreviatedDayNames[(int)_dateTime.DayOfWeek];
 
         public int DayNumber => _dateTime.Day;
 
-        public List<HourPeriodViewModel> HourPeriods { get; } = new();
+        public ObservableCollection<Grid> EventGridList { get; }
         public double BorderOpacity { get; set; }
+
+        public void UpdateFromEventsList(IList<IEventViewModel> events)
+        {
+            EventGridList.Clear();
+            EventGridList.Add(BuildEventGrid());
+        }
     }
 
     public class HourPeriodViewModel : ViewModelBase

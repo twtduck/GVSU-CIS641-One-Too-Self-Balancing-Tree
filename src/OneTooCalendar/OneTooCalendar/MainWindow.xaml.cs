@@ -9,10 +9,8 @@ namespace OneTooCalendar
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : INotifyPropertyChanged
+    public partial class MainWindow
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
-
         public MainWindow()
         {
             DataContext = this;
@@ -22,6 +20,7 @@ namespace OneTooCalendar
 
         private void StartInitializeApplication()
         {
+            MainWindowViewModel.CurrentView = new SynchronizingCalendarViewModel();
             var initTimeToken = new CancellationTokenSource(TimeSpan.FromSeconds(60)).Token;
             InitializeApplicationAsync(initTimeToken).RunCatchingFailure();
         }
@@ -29,8 +28,19 @@ namespace OneTooCalendar
         async Task InitializeApplicationAsync(CancellationToken token)
         {
             var apiService = new GoogleCalendarService();
-            var connectSucceed = (await apiService.TryConnectAsync(token)) && !token.IsCancellationRequested;
-            MainWindowViewModel.CurrentView = connectSucceed ? new CalendarViewModel() : new InitializationErrorViewModel(StartInitializeApplication);
+            var connectSucceed = (await apiService.InitializeServiceAsync(token)) && !token.IsCancellationRequested;
+            if (connectSucceed)
+            {
+                var calendar = new CalendarViewModel(apiService);
+                calendar.TemporarilySetSynchronizationView = (
+                    () => MainWindowViewModel.CurrentView = new SynchronizingCalendarViewModel(),
+                    () => MainWindowViewModel.CurrentView = calendar);
+                MainWindowViewModel.CurrentView = calendar;
+            }
+            else
+            {
+                MainWindowViewModel.CurrentView = new InitializationErrorViewModel(StartInitializeApplication);
+            }
         }
 
         public MainWindowViewModel MainWindowViewModel { get; } = new();

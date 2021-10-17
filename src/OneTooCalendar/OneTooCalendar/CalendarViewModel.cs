@@ -1,25 +1,32 @@
 using System;
 using System.Globalization;
+using System.Threading;
+using System.Windows.Media.Imaging;
 
 namespace OneTooCalendar
 {
     public class CalendarViewModel : ViewModelBase
     {
+        private readonly GoogleCalendarService _googleCalendarService;
         private CalendarWeekViewModel _calendarWeekViewModel;
         private BacklogViewModel _backlogViewModel;
         private string _currentMonthAndYear = string.Empty;
 
-        public CalendarViewModel()
+        public CalendarViewModel(GoogleCalendarService googleCalendarService)
         {
-            _calendarWeekViewModel = new CalendarWeekViewModel(GetFirstDayOfCurrentWeek());
+            _googleCalendarService = googleCalendarService;
+            _calendarWeekViewModel = new CalendarWeekViewModel(GetFirstDayOfCurrentWeek(), _googleCalendarService);
             UpdateCurrentMonthAndYear();
             _backlogViewModel = new BacklogViewModel();
             PreviousWeekButtonCommand = new OneTooCalendarCommand(_ => CalendarWeekViewModel =
-                new CalendarWeekViewModel(CalendarWeekViewModel.StartDate.AddDays(-CalendarWeekViewModel.DaysInAWeek)));
+                new CalendarWeekViewModel(CalendarWeekViewModel.StartDate.AddDays(-CalendarWeekViewModel.DaysInAWeek), _googleCalendarService));
             NextWeekButtonCommand = new OneTooCalendarCommand(_ => CalendarWeekViewModel =
-                new CalendarWeekViewModel(CalendarWeekViewModel.StartDate.AddDays(CalendarWeekViewModel.DaysInAWeek)));
+                new CalendarWeekViewModel(CalendarWeekViewModel.StartDate.AddDays(CalendarWeekViewModel.DaysInAWeek), _googleCalendarService));
             TodayButtonCommand = new OneTooCalendarCommand(_ =>
-                CalendarWeekViewModel = new CalendarWeekViewModel(GetFirstDayOfCurrentWeek()));
+                CalendarWeekViewModel = new CalendarWeekViewModel(GetFirstDayOfCurrentWeek(), _googleCalendarService));
+            RefreshButtonCommand = new OneTooCalendarCommand(_ =>
+                OnRefreshButtonClicked()
+                );
 
             DateTime GetFirstDayOfCurrentWeek()
             {
@@ -27,11 +34,19 @@ namespace OneTooCalendar
             }
         }
 
+        private void OnRefreshButtonClicked()
+        {
+            TemporarilySetSynchronizationView.before();
+            var refreshTask = CalendarWeekViewModel.TryRefreshEventsAsync(new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token)
+                .RunCatchingFailure().ContinueWith(completedTask => TemporarilySetSynchronizationView.after()); // TODO handle completed task result
+        }
+
         public OneTooCalendarCommand NextWeekButtonCommand { get; }
 
         public OneTooCalendarCommand PreviousWeekButtonCommand { get; }
 
         public OneTooCalendarCommand TodayButtonCommand { get; }
+        public OneTooCalendarCommand RefreshButtonCommand { get; }
 
         public CalendarWeekViewModel CalendarWeekViewModel
         {
@@ -70,5 +85,7 @@ namespace OneTooCalendar
                 OnPropertyChanged();
             }
         }
+
+        public (Action before, Action after) TemporarilySetSynchronizationView { get; set; }
     }
 }

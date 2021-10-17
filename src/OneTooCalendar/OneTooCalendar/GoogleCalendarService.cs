@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -16,19 +17,30 @@ namespace OneTooCalendar
 
     public class GoogleCalendarService : ICalendarService
     {
-        public async Task<bool> TryConnectAsync(CancellationToken token)
+        public async Task<bool> InitializeServiceAsync(CancellationToken token)
         {
             var googleCalendarService = await GetCalendarService(token);
             if (googleCalendarService is null)
                 return false;
 
-            var calendars = await GetCalendarsAsync();
-            return true;
+            var calendars = await GetCalendarsAsync(token);
+            return calendars.Any();
         }
 
-        public IList<IEventViewModel> GetEventsForDate()
+        public async Task<IList<IEventViewModel>?> GetEventsForDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken token)
         {
-            return new List<IEventViewModel>();
+            Debug.Assert(_googleCalendarService is not null);
+            var calendarFeeds = await GetCalendarsAsync(token);
+            var events = new List<IEventViewModel>();
+            foreach (var calendar in calendarFeeds)
+            {
+                var calEvents = await GetCalendarEventsAsync(calendar, startDate, endDate, token);
+                if (calEvents is null)
+                    return null;
+                events.AddRange(calEvents);
+            }
+
+            return events;
         }
 
         private CalendarService? _googleCalendarService;
@@ -71,7 +83,7 @@ namespace OneTooCalendar
             return service;
         }
 
-        private async Task<Calendar[]> GetCalendarsAsync()
+        private async Task<Calendar[]> GetCalendarsAsync(CancellationToken token)
         {
             var service = _googleCalendarService;
             if (service is null)
@@ -80,12 +92,12 @@ namespace OneTooCalendar
             try
             {
                 var request = service.CalendarList.List();
-                var calList = await request.ExecuteAsync();
+                var calList = await request.ExecuteAsync(token);
                 return Task.WhenAll(
                     calList.Items
                     .Select(x => x.Id)
                     .Select(service.Calendars.Get)
-                    .Select(x => x.ExecuteAsync())
+                    .Select(x => x.ExecuteAsync(token))
                     ).Result;
             }
             catch (Exception)
@@ -93,6 +105,54 @@ namespace OneTooCalendar
                 return Array.Empty<Calendar>();
             }
         }
+
+        private async Task<IList<IEventViewModel>?> GetCalendarEventsAsync(Calendar googleCalendar, DateTime startTime, DateTime endTime, CancellationToken token)
+        {
+            var service = _googleCalendarService;
+            if (service is null)
+                return null;
+
+            try
+            {
+                var eventsListRequest = service.Events.List(googleCalendar.Id);
+                eventsListRequest.TimeMin = startTime;
+                eventsListRequest.TimeMax = endTime;
+                eventsListRequest.ShowDeleted = false;
+                eventsListRequest.SingleEvents = true;
+                var singleEvents = await eventsListRequest.ExecuteAsync(token);
+                var eventsFound = new List<IEventViewModel>();
+                foreach (var singleEventsItem in singleEvents.Items)
+                {
+                    eventsFound.Add(new CalendarEvent(googleCalendar)
+                    {
+                        AllDayEvent = !singleEventsItem.Start.DateTime.HasValue,
+                        StartTime = singleEventsItem.Start.DateTime ??
+                                    (DateTime.TryParse(singleEventsItem.Start.Date, out var startDateParsed)
+                                        ? startDateParsed
+                                        : ErrorGettingDate()),
+                        EndTime = singleEventsItem.End.DateTime ??
+                                    (DateTime.TryParse(singleEventsItem.Start.Date, out var endDateParsed)
+                                        ? endDateParsed
+                                        : ErrorGettingDate()),
+                        Title = singleEventsItem.Summary,
+                        Location = singleEventsItem.Location
+                    });
+                }
+
+                return eventsFound;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+
+            DateTime ErrorGettingDate()
+            {
+                Debug.Fail(" Could not get DateTime for event");
+                return startTime;
+            }
+        }
+
 
         // public async Task<List<IApiCalendar>> GetDuckCalsAsync()
         // {
