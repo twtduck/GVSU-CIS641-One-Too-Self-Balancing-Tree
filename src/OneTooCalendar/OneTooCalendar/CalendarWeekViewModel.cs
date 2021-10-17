@@ -7,7 +7,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Google.Apis.Calendar.v3.Data;
+using Colors = Google.Apis.Calendar.v3.Data.Colors;
 
 namespace OneTooCalendar
 {
@@ -71,10 +73,10 @@ namespace OneTooCalendar
         {
             _dateTime = dateTime;
 
-            EventGridList = new ObservableCollection<Grid>(new[] { BuildEventGrid() });
+            EventGridList = new ObservableCollection<Grid>();
         }
 
-        private static Grid BuildEventGrid()
+        private static Grid BuildEventGrid(IList<IEventViewModel> eventViewModels, DateTime dateMidnight)
         {
             var eventGrid = new Grid();
             for (int i = 0; i < 24 * 4; i++)
@@ -92,13 +94,41 @@ namespace OneTooCalendar
                     dividerGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(11) });
                     var border = new Border
                     {
-                        BorderBrush = ThemeCustomization.CalendarDivider,
+                        BorderBrush = ThemeHelper.CalendarDivider,
                         BorderThickness = new Thickness(0, 1, 0, 0)
                     };
                     border.SetValue(Grid.RowProperty, 0);
                     dividerGrid.Children.Add(border);
                     eventGrid.Children.Add(dividerGrid);
                 }
+            }
+
+            foreach (var eventViewModel in eventViewModels.OrderBy(x => x.StartTime))
+            {
+                if (eventViewModel.AllDayEvent)
+                    continue;
+
+                if (eventViewModel.StartTime >= dateMidnight.AddDays(1) || eventViewModel.EndTime <= dateMidnight)
+                    continue;
+
+                var firstBlock = eventViewModel.StartTime.Hour * 4 + eventViewModel.StartTime.Minute / 15;
+                var duration = eventViewModel.EndTime.Hour * 4 + eventViewModel.EndTime.Minute / 15 - firstBlock;
+                if (eventViewModel.EndTime.Date > dateMidnight)
+                    duration += 24 * 4;
+                if (duration < 1)
+                    duration = 1;
+                if (duration > 24 * 4 - firstBlock)
+                    duration = 24 * 4 - firstBlock;
+
+                var thisEventGrid = new Border();
+                thisEventGrid.SetValue(Grid.RowProperty, firstBlock);
+                thisEventGrid.SetValue(Grid.RowSpanProperty, duration);
+                thisEventGrid.Background = new SolidColorBrush(eventViewModel.Color);
+                thisEventGrid.BorderThickness = new Thickness(0);
+                thisEventGrid.CornerRadius = new CornerRadius(4);
+                thisEventGrid.Margin = new Thickness(2);
+                thisEventGrid.Child = new TextBlock() { Text = eventViewModel.Title, Margin = new Thickness(4), TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(System.Windows.Media.Colors.White)};
+                eventGrid.Children.Add(thisEventGrid);
             }
 
             return eventGrid;
@@ -114,7 +144,7 @@ namespace OneTooCalendar
         public void UpdateFromEventsList(IList<IEventViewModel> events)
         {
             EventGridList.Clear();
-            EventGridList.Add(BuildEventGrid());
+            EventGridList.Add(BuildEventGrid(events, _dateTime));
         }
     }
 

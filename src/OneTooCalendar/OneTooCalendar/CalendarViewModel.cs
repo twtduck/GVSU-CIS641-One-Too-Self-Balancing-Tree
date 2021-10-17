@@ -53,9 +53,13 @@ namespace OneTooCalendar
             get => _calendarWeekViewModel;
             set
             {
+                TemporarilySetSynchronizationView.before.Invoke();
                 _calendarWeekViewModel = value;
                 UpdateCurrentMonthAndYear();
                 OnPropertyChanged();
+                CalendarWeekViewModel.TryRefreshEventsAsync(new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token)
+                    .RunCatchingFailure()
+                    .ContinueWith(_ => TemporarilySetSynchronizationView.after.Invoke()); // TODO handle false
             }
         }
 

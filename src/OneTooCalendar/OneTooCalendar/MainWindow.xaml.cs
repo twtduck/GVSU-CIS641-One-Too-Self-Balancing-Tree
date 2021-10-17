@@ -32,6 +32,7 @@ namespace OneTooCalendar
             if (connectSucceed)
             {
                 var calendar = new CalendarViewModel(apiService);
+                await calendar.CalendarWeekViewModel.TryRefreshEventsAsync(token);
                 calendar.TemporarilySetSynchronizationView = (
                     () => MainWindowViewModel.CurrentView = new SynchronizingCalendarViewModel(),
                     () => MainWindowViewModel.CurrentView = calendar);
