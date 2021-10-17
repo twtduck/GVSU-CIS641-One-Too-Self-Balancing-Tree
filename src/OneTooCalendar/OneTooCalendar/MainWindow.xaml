@@ -6,7 +6,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:local="clr-namespace:OneTooCalendar"
         mc:Ignorable="d"
-        Title="MainWindow" Height="800" Width="1280"
+        Title="OneTooCalendar" Height="800" Width="1280"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         Background="{DynamicResource MaterialDesignPaper}"
         TextElement.FontWeight="Medium"
