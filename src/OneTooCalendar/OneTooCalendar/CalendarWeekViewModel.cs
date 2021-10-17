@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Documents;
 
 namespace OneTooCalendar
 {
@@ -62,7 +60,7 @@ namespace OneTooCalendar
 
         public int DayNumber => _dateTime.Day;
 
-        public List<HourPeriodViewModel> HourPeriods { get; } = new List<HourPeriodViewModel>();
+        public List<HourPeriodViewModel> HourPeriods { get; } = new();
         public double BorderOpacity { get; set; }
     }
 
@@ -78,7 +76,7 @@ namespace OneTooCalendar
             }
         }
 
-        public List<QuarterHourPeriodViewModel> QuarterHourPeriods { get; } = new List<QuarterHourPeriodViewModel>();
+        public List<QuarterHourPeriodViewModel> QuarterHourPeriods { get; } = new();
     }
 
     public class QuarterHourPeriodViewModel : ViewModelBase

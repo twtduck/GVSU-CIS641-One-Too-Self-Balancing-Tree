@@ -1,47 +1,39 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace OneTooCalendar
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window, INotifyPropertyChanged
+    public partial class MainWindow : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = "")
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+        public event PropertyChangedEventHandler? PropertyChanged;
+
         public MainWindow()
         {
             DataContext = this;
             InitializeComponent();
-            InitializeApplicationAsync().RunCatchingFailure();
+            StartInitializeApplication();
         }
 
-        async Task InitializeApplicationAsync()
+        private void StartInitializeApplication()
         {
-            await Task.Delay(TimeSpan.FromSeconds(2));
-            MainWindowViewModel.CurrentView = new CalendarViewModel();
+            var initTimeToken = new CancellationTokenSource(TimeSpan.FromSeconds(60)).Token;
+            InitializeApplicationAsync(initTimeToken).RunCatchingFailure();
         }
 
-        public MainWindowViewModel MainWindowViewModel { get; } = new MainWindowViewModel();
+        async Task InitializeApplicationAsync(CancellationToken token)
+        {
+            var apiService = new GoogleCalendarService();
+            var connectSucceed = (await apiService.TryConnectAsync(token)) && !token.IsCancellationRequested;
+            MainWindowViewModel.CurrentView = connectSucceed ? new CalendarViewModel() : new InitializationErrorViewModel(StartInitializeApplication);
+        }
+
+        public MainWindowViewModel MainWindowViewModel { get; } = new();
     }
 
     public static class TaskExtensions

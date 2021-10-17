@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -14,48 +14,56 @@ namespace OneTooCalendar
 {
     public interface ICalendarService { }
 
-    public class OneTooCalendarService : ICalendarService
+    public class GoogleCalendarService : ICalendarService
     {
-        public bool TryConnect()
+        public async Task<bool> TryConnectAsync(CancellationToken token)
         {
-            var googleCalendarService = GetCalendarService();
-            return false;
+            var googleCalendarService = await GetCalendarService(token);
+            if (googleCalendarService is null)
+                return false;
+
+            var calendars = await GetCalendarsAsync();
+            return true;
         }
-        
+
         public IList<IEventViewModel> GetEventsForDate()
         {
             return new List<IEventViewModel>();
         }
-        
+
         private CalendarService? _googleCalendarService;
 
-        private CalendarService GetCalendarService()
+        private async Task<CalendarService?> GetCalendarService(CancellationToken token)
         {
             if (_googleCalendarService != null)
                 return _googleCalendarService;
 
             UserCredential credential;
 
-            using (var stream =
-                new FileStream("ApiKeys/credentials.json", FileMode.Open, FileAccess.Read))
+            try
             {
+                await using var stream = new FileStream("ApiKeys/credentials.json", FileMode.Open, FileAccess.Read);
                 // The file token.json stores the user's access and refresh tokens, and is created
                 // automatically when the authorization flow completes for the first time.
                 string credPath = "token.json";
-                credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
-                    GoogleClientSecrets.FromStream(stream).Secrets,
+                credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
+                    (await GoogleClientSecrets.FromStreamAsync(stream, token)).Secrets,
                     new[] { CalendarService.Scope.CalendarReadonly },
                     "user",
-                    CancellationToken.None,
-                    new FileDataStore(credPath, true)).Result;
-                Console.WriteLine("Credential file saved to: " + credPath);
+                    token,
+                    new FileDataStore(credPath, true)
+                    );
+            }
+            catch (Exception)
+            {
+                return null;
             }
 
             // Create Google Calendar API service.
             var service = new CalendarService(new BaseClientService.Initializer()
             {
                 HttpClientInitializer = credential,
-                ApplicationName = "DuckCal",
+                ApplicationName = "OneTooCalendar",
             });
 
             _googleCalendarService = service;
@@ -63,16 +71,27 @@ namespace OneTooCalendar
             return service;
         }
 
-        private async Task<Calendar[]> GetCalendarsAsync(CalendarService service)
+        private async Task<Calendar[]> GetCalendarsAsync()
         {
-            var request = service.CalendarList.List();
-            var calList = await request.ExecuteAsync();
-            return Task.WhenAll(
-                calList.Items
-                   .Select(x => x.Id)
-                   .Select(service.Calendars.Get)
-                   .Select(x => x.ExecuteAsync())
-                ).Result;
+            var service = _googleCalendarService;
+            if (service is null)
+                return Array.Empty<Calendar>();
+
+            try
+            {
+                var request = service.CalendarList.List();
+                var calList = await request.ExecuteAsync();
+                return Task.WhenAll(
+                    calList.Items
+                    .Select(x => x.Id)
+                    .Select(service.Calendars.Get)
+                    .Select(x => x.ExecuteAsync())
+                    ).Result;
+            }
+            catch (Exception)
+            {
+                return Array.Empty<Calendar>();
+            }
         }
 
         // public async Task<List<IApiCalendar>> GetDuckCalsAsync()

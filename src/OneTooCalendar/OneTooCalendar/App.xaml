@@ -15,6 +15,14 @@
                 <TextBlock TextAlignment="Center" VerticalAlignment="Center">Synchronizing calendar. Please wait...</TextBlock>
             </DataTemplate>
             
+            <DataTemplate DataType="{x:Type local:InitializationErrorViewModel}">
+                <StackPanel>
+                    <TextBlock TextAlignment="Center" VerticalAlignment="Center">Connection error. Verify credentials and network connectivity, then try again.</TextBlock>
+                    <Button Content="Retry" Command="{Binding RestartInitializationCommand}" />
+                </StackPanel>
+                
+            </DataTemplate>
+            
             <DataTemplate DataType="{x:Type local:MainWindowViewModel}">
                 <ContentPresenter Content="{Binding CurrentView}"></ContentPresenter>
             </DataTemplate>
