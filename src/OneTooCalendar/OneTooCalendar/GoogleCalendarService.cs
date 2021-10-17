@@ -32,13 +32,12 @@ namespace OneTooCalendar
             Debug.Assert(_googleCalendarService is not null);
             var calendarFeeds = await GetCalendarsAsync(token);
             var events = new List<IEventViewModel>();
-            foreach (var calendar in calendarFeeds)
-            {
-                var calEvents = await GetCalendarEventsAsync(calendar, startDate, endDate, token);
-                if (calEvents is null)
-                    return null;
-                events.AddRange(calEvents);
-            }
+            var getEventsResults = await Task.WhenAll(calendarFeeds.Select(x => GetCalendarEventsAsync(x, startDate, endDate, token)));
+            if (getEventsResults.Any(x => x is null))
+                return null;
+
+            events.AddRange(getEventsResults.SelectMany(x => x!));
+
 
             return events;
         }
