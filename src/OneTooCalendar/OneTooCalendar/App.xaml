@@ -44,27 +44,21 @@
                         <Button Grid.Column="0" Command="{Binding TodayButtonCommand}" Content="Today" Margin="24, 0, 24, 0" />
                         <Button Grid.Column="1" Command="{Binding PreviousWeekButtonCommand}">
                             <!-- chevron-left icon from https://materialdesignicons.com/ -->
-                            <Viewbox Width="48" Height="48">
-                                <Canvas Width="24" Height="24">
-                                    <Path Fill="Black" Data="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z" />
-                                </Canvas>
-                            </Viewbox>
+                            <Border>
+                                <Path Fill="Black" Data="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z" Stretch="Uniform" />
+                            </Border>
                         </Button>
                         <Button Grid.Column="2" Command="{Binding NextWeekButtonCommand}">
                             <!-- chevron-right icon from https://materialdesignicons.com/ -->
-                            <Viewbox Width="48" Height="48">
-                                <Canvas Width="24" Height="24">
-                                    <Path Fill="Black" Data="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
-                                </Canvas>
-                            </Viewbox>
+                            <Border>
+                                <Path Fill="Black" Data="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" Stretch="Uniform" />
+                            </Border>
                         </Button>
                         <TextBlock Grid.Column="3" FontSize="36" Margin="12" Text="{Binding CurrentMonthAndYear}"/>
                         <Button Grid.Column="4" Command="{Binding RefreshButtonCommand}" Margin="24, 0, 24, 0" >
-                            <Viewbox Width="48" Height="48">
-                                <Canvas Width="24" Height="24">
-                                    <Path Fill="Black" Data="M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2M18 11H13L14.81 9.19A3.94 3.94 0 0 0 12 8A4 4 0 1 0 15.86 13H17.91A6 6 0 1 1 12 6A5.91 5.91 0 0 1 16.22 7.78L18 6Z" />
-                                </Canvas>
-                            </Viewbox>
+                            <Border>
+                                <Path Fill="Black" Data="M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2M18 11H13L14.81 9.19A3.94 3.94 0 0 0 12 8A4 4 0 1 0 15.86 13H17.91A6 6 0 1 1 12 6A5.91 5.91 0 0 1 16.22 7.78L18 6Z" Stretch="Uniform" />
+                            </Border>
                         </Button>
                     </Grid>
                     <Grid Grid.Row="1">
