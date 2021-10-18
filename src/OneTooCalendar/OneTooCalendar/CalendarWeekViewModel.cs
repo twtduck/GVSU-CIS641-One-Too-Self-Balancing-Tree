@@ -41,6 +41,8 @@ namespace OneTooCalendar
             .Select(hourNumber => new HourLabelViewModel(hourNumber))
             .ToList();
 
+        public List<DateHeaderViewModel> DateHeaders => DateViewModels.Select(x => x.HeaderViewModel).ToList();
+
         public async Task<bool> TryRefreshEventsAsync(CancellationToken token)
         {
             var events = await _googleCalendarService.GetEventsForDateRangeAsync(StartDate, StartDate.AddDays(DaysInAWeek), token);
@@ -58,6 +60,18 @@ namespace OneTooCalendar
         {
             foreach (var dateViewModel in DateViewModels)
                 dateViewModel.Dispose();
+        }
+    }
+
+    public class DateHeaderViewModel : ViewModelBase
+    {
+        public string DayOfTheWeek { get; }
+        public int DayNumber { get; }
+
+        public DateHeaderViewModel(string dayOfTheWeek, int dayNumber)
+        {
+            DayOfTheWeek = dayOfTheWeek;
+            DayNumber = dayNumber;
         }
     }
 
@@ -180,6 +194,8 @@ namespace OneTooCalendar
 
         public ObservableCollection<Grid> EventGridList { get; }
         public double BorderOpacity { get; set; }
+
+        public DateHeaderViewModel HeaderViewModel => new DateHeaderViewModel(DayOfTheWeek, DayNumber);
 
         public void UpdateFromEventsList(IList<IEventDataModel> events)
         {
