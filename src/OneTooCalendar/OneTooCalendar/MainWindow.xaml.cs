@@ -36,6 +36,7 @@ namespace OneTooCalendar
                 calendar.TemporarilySetSynchronizationView = (
                     () => MainWindowViewModel.CurrentView = new SynchronizingCalendarViewModel(),
                     () => MainWindowViewModel.CurrentView = calendar);
+                Closing += (_, _) => calendar.Dispose();
                 MainWindowViewModel.CurrentView = calendar;
             }
             else

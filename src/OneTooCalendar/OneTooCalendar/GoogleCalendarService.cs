@@ -27,11 +27,11 @@ namespace OneTooCalendar
             return calendars.Any();
         }
 
-        public async Task<IList<IEventViewModel>?> GetEventsForDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken token)
+        public async Task<IList<IEventDataModel>?> GetEventsForDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken token)
         {
             Debug.Assert(_googleCalendarService is not null);
             var calendarFeeds = await GetCalendarsAsync(token);
-            var events = new List<IEventViewModel>();
+            var events = new List<IEventDataModel>();
             var getEventsResults = await Task.WhenAll(calendarFeeds.Select(x => GetCalendarEventsAsync(x, startDate, endDate, token)));
             if (getEventsResults.Any(x => x is null))
                 return null;
@@ -105,7 +105,7 @@ namespace OneTooCalendar
             }
         }
 
-        private async Task<IList<IEventViewModel>?> GetCalendarEventsAsync(Calendar googleCalendar, DateTime startTime, DateTime endTime, CancellationToken token)
+        private async Task<IList<IEventDataModel>?> GetCalendarEventsAsync(Calendar googleCalendar, DateTime startTime, DateTime endTime, CancellationToken token)
         {
             var service = _googleCalendarService;
             if (service is null)
@@ -119,7 +119,7 @@ namespace OneTooCalendar
                 eventsListRequest.ShowDeleted = false;
                 eventsListRequest.SingleEvents = true;
                 var singleEvents = await eventsListRequest.ExecuteAsync(token);
-                var eventsFound = new List<IEventViewModel>();
+                var eventsFound = new List<IEventDataModel>();
                 foreach (var singleEventsItem in singleEvents.Items)
                 {
                     eventsFound.Add(new CalendarEvent(googleCalendar)

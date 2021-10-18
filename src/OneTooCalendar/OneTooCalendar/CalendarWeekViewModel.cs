@@ -7,12 +7,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using MaterialDesignColors.ColorManipulation;
 
 namespace OneTooCalendar
 {
-    public class CalendarWeekViewModel : ViewModelBase
+    public class CalendarWeekViewModel : ViewModelBase, IDisposable
     {
         private readonly GoogleCalendarService _googleCalendarService;
         public const int DaysInAWeek = 7;
@@ -52,6 +53,12 @@ namespace OneTooCalendar
             return true;
 
         }
+
+        public void Dispose()
+        {
+            foreach (var dateViewModel in DateViewModels)
+                dateViewModel.Dispose();
+        }
     }
 
     public class HourLabelViewModel : ViewModelBase
@@ -64,9 +71,11 @@ namespace OneTooCalendar
         public string LabelContent { get; }
     }
 
-    public class DateViewModel : ViewModelBase
+    public class DateViewModel : ViewModelBase, IDisposable
     {
         private readonly DateTime _dateTime;
+
+        private readonly List<EventViewModel> IndividualEvents = new();
 
         public DateViewModel(DateTime dateTime)
         {
@@ -75,7 +84,7 @@ namespace OneTooCalendar
             EventGridList = new ObservableCollection<Grid>();
         }
 
-        private static Grid BuildEventGrid(IList<IEventViewModel> eventViewModels, DateTime dateMidnight)
+        private static Grid BuildEventGrid(IList<IEventDataModel> eventDataModels, DateTime dateMidnight, List<EventViewModel> individualEvents)
         {
             const int blockSize = 12;
             var eventGrid = new Grid();
@@ -103,29 +112,29 @@ namespace OneTooCalendar
                 }
             }
 
-            foreach (var eventViewModel in eventViewModels.OrderBy(x => x.StartTime))
+            foreach (var eventDataModel in eventDataModels.OrderBy(x => x.StartTime))
             {
-                if (eventViewModel.AllDayEvent)
+                if (eventDataModel.AllDayEvent)
                     continue;
 
-                if (eventViewModel.StartTime >= dateMidnight.AddDays(1) || eventViewModel.EndTime <= dateMidnight)
+                if (eventDataModel.StartTime >= dateMidnight.AddDays(1) || eventDataModel.EndTime <= dateMidnight)
                     continue;
 
-                var firstBlock = GetBlockIndexFromTime(eventViewModel.StartTime);
-                var duration = GetBlockIndexFromTime(eventViewModel.EndTime) - firstBlock;
-                if (eventViewModel.EndTime.Date > dateMidnight)
+                var firstBlock = GetBlockIndexFromTime(eventDataModel.StartTime);
+                var duration = GetBlockIndexFromTime(eventDataModel.EndTime) - firstBlock;
+                if (eventDataModel.EndTime.Date > dateMidnight)
                     duration += 24 * 4;
                 if (duration < 1)
                     duration = 1;
                 if (duration > 24 * 4 - firstBlock)
                     duration = 24 * 4 - firstBlock;
 
-                var thisEventGrid = new Border();
+                var thisEventGrid = new EventViewModel();
                 thisEventGrid.SetValue(Grid.RowProperty, firstBlock);
                 thisEventGrid.SetValue(Grid.RowSpanProperty, duration);
-                var eventColor = eventViewModel.Color;
+                var eventColor = eventDataModel.Color;
                 // Events in the past get a reduced saturation color
-                if (DateTime.Now > eventViewModel.EndTime)
+                if (DateTime.Now > eventDataModel.EndTime)
                 {
                     var hsb = eventColor.ToHsb();
                     hsb = new Hsb(hsb.Hue, hsb.Saturation / 3, hsb.Brightness);
@@ -135,8 +144,9 @@ namespace OneTooCalendar
                 thisEventGrid.BorderThickness = new Thickness(0);
                 thisEventGrid.CornerRadius = new CornerRadius(4);
                 thisEventGrid.Margin = new Thickness(2);
-                thisEventGrid.Child = new TextBlock() { Text = eventViewModel.Title, Margin = new Thickness(4), TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(System.Windows.Media.Colors.White)};
+                thisEventGrid.Child = new TextBlock() { Text = eventDataModel.Title, Margin = new Thickness(4), TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(System.Windows.Media.Colors.White)};
                 eventGrid.Children.Add(thisEventGrid);
+                individualEvents.Add(thisEventGrid);
             }
 
             // Draw the current time line
@@ -171,13 +181,59 @@ namespace OneTooCalendar
         public ObservableCollection<Grid> EventGridList { get; }
         public double BorderOpacity { get; set; }
 
-        public void UpdateFromEventsList(IList<IEventViewModel> events)
+        public void UpdateFromEventsList(IList<IEventDataModel> events)
         {
             EventGridList.Clear();
-            EventGridList.Add(BuildEventGrid(events, _dateTime));
+            foreach (var individualEvent in IndividualEvents)
+            {
+                individualEvent.Dispose();
+            }
+            IndividualEvents.Clear();
+            EventGridList.Add(BuildEventGrid(events, _dateTime, IndividualEvents));
+        }
+
+        public void Dispose()
+        {
+            foreach (var individualEvent in IndividualEvents)
+                individualEvent.Dispose();
+            IndividualEvents.Clear();
         }
     }
 
+    public class EventViewModel : Border, IDisposable
+    {
+        private bool _dragging;
+
+        public EventViewModel()
+        {
+            MouseMove += OnMouseMove;
+            MouseLeftButtonDown += OnLeftButtonDown;
+            MouseLeftButtonUp += OnLeftButtonUp;
+        }
+
+        private void OnLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _dragging = true;
+        }
+
+        private void OnLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            _dragging = false;
+        }
+
+        private void OnMouseMove(object sender, MouseEventArgs e)
+        {
+            
+        }
+
+        public void Dispose()
+        {
+            MouseMove -= OnMouseMove;
+            MouseLeftButtonDown -= OnLeftButtonDown;
+            MouseLeftButtonUp -= OnLeftButtonUp;
+        }
+    }
+    
     public class HourPeriodViewModel : ViewModelBase
     {
         public HourPeriodViewModel(DateTime hourTime)

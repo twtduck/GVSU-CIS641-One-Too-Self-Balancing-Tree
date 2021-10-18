@@ -5,7 +5,7 @@ using System.Windows.Media.Imaging;
 
 namespace OneTooCalendar
 {
-    public class CalendarViewModel : ViewModelBase
+    public class CalendarViewModel : ViewModelBase, IDisposable
     {
         private readonly GoogleCalendarService _googleCalendarService;
         private CalendarWeekViewModel _calendarWeekViewModel;
@@ -54,6 +54,7 @@ namespace OneTooCalendar
             set
             {
                 TemporarilySetSynchronizationView.before.Invoke();
+                _calendarWeekViewModel.Dispose();
                 _calendarWeekViewModel = value;
                 UpdateCurrentMonthAndYear();
                 OnPropertyChanged();
@@ -91,5 +92,10 @@ namespace OneTooCalendar
         }
 
         public (Action before, Action after) TemporarilySetSynchronizationView { get; set; }
+
+        public void Dispose()
+        {
+            _calendarWeekViewModel.Dispose();
+        }
     }
 }

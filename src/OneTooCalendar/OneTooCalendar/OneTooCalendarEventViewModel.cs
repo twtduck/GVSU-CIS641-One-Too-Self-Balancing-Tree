@@ -3,7 +3,7 @@ using System.Windows.Media;
 
 namespace OneTooCalendar
 {
-    public interface IEventViewModel
+    public interface IEventDataModel
     {
         DateTime StartTime { get; }
         DateTime EndTime { get; }

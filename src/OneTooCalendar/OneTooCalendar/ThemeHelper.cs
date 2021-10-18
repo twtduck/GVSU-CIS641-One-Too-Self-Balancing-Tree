@@ -28,7 +28,7 @@ namespace OneTooCalendar
 
     }
 
-    public class CalendarEvent : IEventViewModel
+    public class CalendarEvent : IEventDataModel
     {
         private readonly Calendar _sourceCalendar;
 
