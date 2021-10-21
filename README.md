@@ -20,6 +20,9 @@ The "One Too (Self Balancing) Tree" calendar app is to help make organizing a pe
 
 - [21 Sept 2021](meetings/GVSU-CIS641-OneTooSelfBalancingTree-2021-09-21.md)
 - [28 Sept 2021](meetings/GVSU-CIS641-OneTooSelfBalancingTree-2021-09-28.md)
+- [2 Oct 2021](meetings/GVSU-CIS641-OneTooSelfBalancingTree-2021-10-2.md)
+- [11 Oct 2021](meetings/GVSU-CIS641-OneTooSelfBalancingTree-2021-10-11.md)
+- [19 Oct 2021](meetings/GVSU-CIS641-OneTooSelfBalancingTree-2021-10-19.md)
 
 ## Prerequisites
 
