@@ -31,22 +31,19 @@ namespace OneTooCalendar
 	{
 		private readonly Calendar _sourceCalendar;
 
-		public CalendarEvent(Calendar sourceCalendar)
+		public CalendarEvent(Calendar sourceCalendar, string eventId)
 		{
 			_sourceCalendar = sourceCalendar;
 			Color = ThemeHelper.ColorFromCalendar(_sourceCalendar);
+			SyncInfo = new EventSynchronizationInfo(_sourceCalendar.Id, eventId);
 		}
 
 		public bool AllDayEvent { get; init; }
 		public DateTime StartTime { get; init; }
 		public DateTime EndTime { get; init; }
-		public string Title { get; init; }
-		public string Location { get; init; }
+		public string Title { get; init; } = "";
+		public string Location { get; init; } = "";
 		public Color Color { get; }
-	}
-
-	public class CalendarFeed
-	{
-
+		public EventSynchronizationInfo SyncInfo { get; }
 	}
 }

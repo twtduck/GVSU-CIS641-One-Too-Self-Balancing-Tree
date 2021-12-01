@@ -10,5 +10,6 @@ namespace OneTooCalendar
 		string Title { get; }
 		bool AllDayEvent { get; }
 		Color Color { get; }
+		EventSynchronizationInfo SyncInfo { get; }
 	}
 }

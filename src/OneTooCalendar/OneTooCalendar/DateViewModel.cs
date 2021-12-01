@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Windows;
@@ -13,17 +15,24 @@ namespace OneTooCalendar
 	public class DateViewModel : ViewModelBase, IDisposable
 	{
 		private readonly DateTime _dateTime;
+		private readonly EventCommandFactory _eventCommandFactory;
 
-		private readonly List<EventViewModel> IndividualEvents = new();
+		private readonly List<EventGridEventViewModel> IndividualEvents = new();
 
-		public DateViewModel(DateTime dateTime)
+		public DateViewModel(DateTime dateTime, EventCommandFactory eventCommandFactory)
 		{
 			_dateTime = dateTime;
+			_eventCommandFactory = eventCommandFactory;
 
 			EventGridList = new ObservableCollection<Grid>();
 		}
 
-		private static Grid BuildEventGrid(IList<IEventDataModel> eventDataModels, DateTime dateMidnight, List<EventViewModel> individualEvents)
+		private static Grid BuildEventGrid(
+			IList<IEventDataModel> eventDataModels,
+			DateTime dateMidnight,
+			List<EventGridEventViewModel> individualEvents,
+			EventCommandFactory eventCommandFactory
+			)
 		{
 			const int blockSize = 12;
 			var eventGrid = new Grid();
@@ -59,8 +68,12 @@ namespace OneTooCalendar
 				if (eventDataModel.StartTime >= dateMidnight.AddDays(1) || eventDataModel.EndTime <= dateMidnight)
 					continue;
 
-				var firstBlock = GetBlockIndexFromTime(eventDataModel.StartTime);
-				var duration = GetBlockIndexFromTime(eventDataModel.EndTime) - firstBlock;
+				var startToday = eventDataModel.StartTime < dateMidnight ? dateMidnight : eventDataModel.StartTime;
+				var endToday = eventDataModel.EndTime > dateMidnight.AddDays(1) ? dateMidnight.AddDays(1) : eventDataModel.EndTime;
+
+				var firstBlock = GetBlockIndexFromTime(startToday, dateMidnight);
+				var duration = GetBlockIndexFromTime(endToday, dateMidnight) - firstBlock;
+				Debug.Assert(duration >= 0);
 				if (eventDataModel.EndTime.Date > dateMidnight)
 					duration += 24 * 4;
 				if (duration < 1)
@@ -68,9 +81,9 @@ namespace OneTooCalendar
 				if (duration > 24 * 4 - firstBlock)
 					duration = 24 * 4 - firstBlock;
 
-				var thisEventGrid = new EventViewModel();
-				thisEventGrid.SetValue(Grid.RowProperty, firstBlock);
-				thisEventGrid.SetValue(Grid.RowSpanProperty, duration);
+				var thisEventGridEventViewModel = new EventGridEventViewModel(eventCommandFactory, eventDataModel.SyncInfo);
+				thisEventGridEventViewModel.SetValue(Grid.RowProperty, firstBlock);
+				thisEventGridEventViewModel.SetValue(Grid.RowSpanProperty, duration);
 				var eventColor = eventDataModel.Color;
 				// Events in the past get a reduced saturation color
 				if (DateTime.Now > eventDataModel.EndTime)
@@ -79,19 +92,19 @@ namespace OneTooCalendar
 					hsb = new Hsb(hsb.Hue, hsb.Saturation / 3, hsb.Brightness);
 					eventColor = hsb.ToColor();
 				}
-				thisEventGrid.Background = new SolidColorBrush(eventColor);
-				thisEventGrid.BorderThickness = new Thickness(0);
-				thisEventGrid.CornerRadius = new CornerRadius(4);
-				thisEventGrid.Margin = new Thickness(2);
-				thisEventGrid.Child = new TextBlock() { Text = eventDataModel.Title, Margin = new Thickness(4), TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(System.Windows.Media.Colors.White)};
-				eventGrid.Children.Add(thisEventGrid);
-				individualEvents.Add(thisEventGrid);
+				thisEventGridEventViewModel.Background = new SolidColorBrush(eventColor);
+				thisEventGridEventViewModel.BorderThickness = new Thickness(0);
+				thisEventGridEventViewModel.CornerRadius = new CornerRadius(4);
+				thisEventGridEventViewModel.Margin = new Thickness(2);
+				thisEventGridEventViewModel.Child = new TextBlock() { Text = eventDataModel.Title, Margin = new Thickness(4), TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(System.Windows.Media.Colors.White)};
+				eventGrid.Children.Add(thisEventGridEventViewModel);
+				individualEvents.Add(thisEventGridEventViewModel);
 			}
 
 			// Draw the current time line
 			if (dateMidnight == DateTime.Today)
 			{
-				var block = GetBlockIndexFromTime(DateTime.Now);
+				var block = GetBlockIndexFromTime(DateTime.Now, dateMidnight);
 				var percentThroughBlock = (DateTime.Now.Minute % 15) / 15.0;
 				var pixelOffset = (int)(percentThroughBlock * blockSize);
 				var lineGrid = new Grid();
@@ -107,8 +120,11 @@ namespace OneTooCalendar
 
 			return eventGrid;
 
-			static int GetBlockIndexFromTime(DateTime time)
+			static int GetBlockIndexFromTime(DateTime time, DateTime todayMidnight)
 			{
+				if (time >= todayMidnight.AddDays(1))
+					return 24 * 4;
+
 				return time.Hour * 4 + time.Minute / 15;
 			}
 		}
@@ -128,7 +144,7 @@ namespace OneTooCalendar
 				individualEvent.Dispose();
 			}
 			IndividualEvents.Clear();
-			EventGridList.Add(BuildEventGrid(events, _dateTime, IndividualEvents));
+			EventGridList.Add(BuildEventGrid(events, _dateTime, IndividualEvents, _eventCommandFactory));
 		}
 
 		public void Dispose()

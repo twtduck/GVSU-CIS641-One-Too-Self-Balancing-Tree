@@ -32,9 +32,11 @@ namespace OneTooCalendar
 			{
 				var calendar = new CalendarViewModel(apiService);
 				await calendar.CalendarWeekViewModel.TryRefreshEventsAsync(token);
-				calendar.TemporarilySetSynchronizationView = (
-					() => MainWindowViewModel.CurrentView = new SynchronizingCalendarViewModel(),
-					() => MainWindowViewModel.CurrentView = calendar);
+				calendar.SetMainViewTemporarily = temporaryViewModel =>
+				{
+					MainWindowViewModel.CurrentView = temporaryViewModel;
+					return () => MainWindowViewModel.CurrentView = calendar;
+				};
 				Closing += (_, _) => calendar.Dispose();
 				MainWindowViewModel.CurrentView = calendar;
 			}
@@ -55,17 +57,24 @@ namespace OneTooCalendar
 			{
 				if (task.IsFaulted)
 				{
-					Debug.Fail(task.Exception?.Message ?? "No exception");
+					HandleFailedTask();
 				}
 				return task;
 			}
 
 			task.ContinueWith(
-				_ => Debug.Fail(task.Exception?.Message ?? "No exception"),
+				_ => HandleFailedTask(),
 				TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously
 				);
 
 			return task;
+
+			void HandleFailedTask()
+			{
+				if (Debugger.IsAttached)
+					Debugger.Break();
+				Debug.Fail(task.Exception?.Message ?? "No exception");
+			}
 		}
 	}
 }

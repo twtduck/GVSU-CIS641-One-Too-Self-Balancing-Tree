@@ -16,7 +16,7 @@ namespace OneTooCalendar
 			_googleCalendarService = googleCalendarService;
 			for (var i = 0; i < DaysInAWeek; i++)
 			{
-				DateViewModels.Add(new DateViewModel(startDate + TimeSpan.FromDays(i))
+				DateViewModels.Add(new DateViewModel(startDate + TimeSpan.FromDays(i), new EventCommandFactory(_googleCalendarService))
 				{
 					BorderOpacity = i == 0 ? 0 : 1
 				});

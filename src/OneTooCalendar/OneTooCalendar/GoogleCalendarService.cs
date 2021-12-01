@@ -59,7 +59,7 @@ namespace OneTooCalendar
 				string credPath = "token.json";
 				credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
 					(await GoogleClientSecrets.FromStreamAsync(stream, token)).Secrets,
-					new[] { CalendarService.Scope.CalendarReadonly },
+					new[] { CalendarService.Scope.Calendar },
 					"user",
 					token,
 					new FileDataStore(credPath, true)
@@ -122,7 +122,7 @@ namespace OneTooCalendar
 				var eventsFound = new List<IEventDataModel>();
 				foreach (var singleEventsItem in singleEvents.Items)
 				{
-					eventsFound.Add(new CalendarEvent(googleCalendar)
+					eventsFound.Add(new CalendarEvent(googleCalendar, singleEventsItem.Id)
 					{
 						AllDayEvent = !singleEventsItem.Start.DateTime.HasValue,
 						StartTime = singleEventsItem.Start.DateTime ??
@@ -134,7 +134,7 @@ namespace OneTooCalendar
 								? endDateParsed
 								: ErrorGettingDate()),
 						Title = singleEventsItem.Summary,
-						Location = singleEventsItem.Location
+						Location = singleEventsItem.Location,
 					});
 				}
 
@@ -152,68 +152,23 @@ namespace OneTooCalendar
 			}
 		}
 
+		public async Task<bool> DeleteEventAsync(EventSynchronizationInfo eventToDelete, CancellationToken token)
+		{
+			Debug.Assert(_googleCalendarService is not null);
+			var service = _googleCalendarService;
+			if (service is null)
+				return false;
 
-		// public async Task<List<IApiCalendar>> GetDuckCalsAsync()
-		// {
-		//     var service = GetCalendarService();
-		//     var cals = await GetCalendarsAsync(service);
-		//     return Task.WhenAll(cals.Select(BuildCalendarAsync)).Result.DropNullValues().ToList();
-		// }
-		//
-		// private async Task<IApiCalendar?> BuildCalendarAsync(Calendar calendar)
-		// {
-		//     // TODO Show error or handle time zones
-		//     if (TZConvert.GetTimeZoneInfo(calendar.TimeZone).BaseUtcOffset != TimeZoneInfo.Local.BaseUtcOffset)
-		//         return default;
-		//     
-		//     var service = GetCalendarService();
-		//     var eventsListRequest = service.Events.List(calendar.Id);
-		//     eventsListRequest.ShowDeleted = false;
-		//     eventsListRequest.SingleEvents = true;
-		//     var singleEvents = await eventsListRequest.ExecuteAsync();
-		//     eventsListRequest.SingleEvents = false;
-		//     eventsListRequest.ShowDeleted = true;
-		//     var recurringEvents = await eventsListRequest.ExecuteAsync();
-		//     var cal = new DuckCal(calendar.Summary);
-		//     // TODO Timezone may be not in the system
-		//     foreach (var gCalEventSeries in singleEvents.Items)
-		//     {
-		//         BuildOrModifyEventSeries(gCalEventSeries, cal.EventSeries);
-		//     }
-		//     return cal;
-		// }
-		//
-		// private ICalendarEventSeries? BuildOrModifyEventSeries(Event gCalEventSeries, List<ICalendarEventSeries> calendarEventSeries)
-		// {
-		//     return default;
-		// }
-		//
-		// private IDuckCalEvent? BuildDuckCalEvent(Event gCalEvent)
-		// {
-		//     if (gCalEvent.Status == "cancelled")
-		//         return null;
-		//     if (gCalEvent.Start.DateTime.HasValue && gCalEvent.End.DateTime.HasValue)
-		//     {
-		//         return new TimeBoundDuckCalEvent(gCalEvent.Summary)
-		//         {
-		//             Start = new DateTimeOffset(gCalEvent.Start.DateTime!.Value),
-		//             End = new DateTimeOffset(gCalEvent.End.DateTime!.Value)
-		//         };
-		//     }
-		//     else if (gCalEvent.Start.DateTime.HasValue || gCalEvent.End.DateTime.HasValue)
-		//     {
-		//         //TODO Handle odd case where there is only one of start/end times
-		//         return default;
-		//     }
-		//     else
-		//     {
-		//         // TODO Parse safely
-		//         return new DateBoundDuckCalEvent(gCalEvent.Summary)
-		//         {
-		//             Start = DateTimeOffset.Parse(gCalEvent.Start.Date),
-		//             End = DateTimeOffset.Parse(gCalEvent.End.Date)
-		//         };
-		//     }
-		// }
+			try
+			{
+				var request = service.Events.Delete(eventToDelete.CalendarId, eventToDelete.EventId);
+				await request.ExecuteAsync(token);
+				return true;
+			}
+			catch (Exception)
+			{
+				return false;
+			}
+		}
 	}
 }

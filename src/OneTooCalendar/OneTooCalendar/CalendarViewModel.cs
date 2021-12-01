@@ -35,9 +35,9 @@ namespace OneTooCalendar
 
 		private void OnRefreshButtonClicked()
 		{
-			TemporarilySetSynchronizationView.before();
-			var refreshTask = CalendarWeekViewModel.TryRefreshEventsAsync(new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token)
-				.RunCatchingFailure().ContinueWith(completedTask => TemporarilySetSynchronizationView.after()); // TODO handle completed task result
+			var restore = SetMainViewTemporarily(new SynchronizingCalendarViewModel());
+			CalendarWeekViewModel.TryRefreshEventsAsync(new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token)
+				.RunCatchingFailure().ContinueWith(_ => restore.Invoke()); // TODO handle completed task result
 		}
 
 		public OneTooCalendarCommand NextWeekButtonCommand { get; }
@@ -52,14 +52,14 @@ namespace OneTooCalendar
 			get => _calendarWeekViewModel;
 			set
 			{
-				TemporarilySetSynchronizationView.before.Invoke();
+				var restoreCalendar = SetMainViewTemporarily(new SynchronizingCalendarViewModel());
 				_calendarWeekViewModel.Dispose();
 				_calendarWeekViewModel = value;
 				UpdateCurrentMonthAndYear();
 				OnPropertyChanged();
 				CalendarWeekViewModel.TryRefreshEventsAsync(new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token)
 					.RunCatchingFailure()
-					.ContinueWith(_ => TemporarilySetSynchronizationView.after.Invoke()); // TODO handle false
+					.ContinueWith(_ => restoreCalendar.Invoke()); // TODO handle false
 			}
 		}
 
@@ -90,11 +90,13 @@ namespace OneTooCalendar
 			}
 		}
 
-		public (Action before, Action after) TemporarilySetSynchronizationView { get; set; }
+		public SetMainViewAndReturnRestoreAction SetMainViewTemporarily { get; set; }
 
 		public void Dispose()
 		{
 			_calendarWeekViewModel.Dispose();
 		}
 	}
+	
+	public delegate Action SetMainViewAndReturnRestoreAction(ViewModelBase viewModel);
 }
