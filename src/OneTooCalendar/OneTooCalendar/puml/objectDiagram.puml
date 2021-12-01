@@ -1,0 +1,128 @@
+@startuml
+map "14Nov2021ChurchEventViewModel : EventViewModel" as 14Nov2021ChurchEventViewModel {
+    _dragging => false
+}
+
+map "15Nov2021WorkEventViewModel : EventViewModel" as 15Nov2021WorkEventViewModel {
+    _dragging => false
+}
+
+map "16Nov2021WorkEventViewModel : EventViewModel" as 16Nov2021WorkEventViewModel {
+    _dragging => false
+}
+   
+map "17Nov2021WorkEventViewModel : EventViewModel" as 17Nov2021WorkEventViewModel {
+    _dragging => false
+}
+
+map "17Nov2021CIS641EventViewModel : EventViewModel" as 17Nov2021CIS641EventViewModel {
+    _dragging => false
+}
+
+map "18Nov2021WorkEventViewModel : EventViewModel" as 18Nov2021WorkEventViewModel {
+    _dragging => false
+}
+
+map "18Nov2021CIS611EventViewModel : EventViewModel" as 18Nov2021CIS611EventViewModel {
+    _dragging => false
+}
+
+map "19Nov2021WorkEventViewModel : EventViewModel" as 19Nov2021WorkEventViewModel {
+    _dragging => false
+}
+
+map "14Nov2021DateViewModel : DateViewModel" as 14Nov2021DateViewModel {
+    _dateTime => "14 Nov 2021 12:00 AM"
+    IndividualEvents *-> 14Nov2021ChurchEventViewModel
+    DayOfTheWeek => "Sunday"
+    DayNumber => "14"
+    EventGridList => []
+    BorderOpacity => 0.5
+}
+
+map "15Nov2021DateViewModel : DateViewModel" as 15Nov2021DateViewModel {
+    _dateTime => "15 Nov 2021 12:00 AM"
+    IndividualEvents *-> 15Nov2021WorkEventViewModel
+    DayOfTheWeek => "Monday"
+    DayNumber => "15"
+    EventGridList => []
+    BorderOpacity => 0.5
+}
+
+map "16Nov2021DateViewModel : DateViewModel" as 16Nov2021DateViewModel {
+    _dateTime => "16 Nov 2021 12:00 AM"
+    IndividualEvents *-> 16Nov2021WorkEventViewModel
+    DayOfTheWeek => "Tuesday"
+    DayNumber => "16"
+    EventGridList => []
+    BorderOpacity => 0.5
+}
+
+map "17Nov2021DateViewModel : DateViewModel" as 17Nov2021DateViewModel {
+    _dateTime => "17 Nov 2021 12:00 AM"
+    IndividualEvents *-> 17Nov2021WorkEventViewModel
+    IndividualEvents *-> 17Nov2021CIS641EventViewModel
+    DayOfTheWeek => "Wednesday"
+    DayNumber => "17"
+    EventGridList => []
+    BorderOpacity => 0.5
+}
+
+map "18Nov2021DateViewModel : DateViewModel" as 18Nov2021DateViewModel {
+    _dateTime => "18 Nov 2021 12:00 AM"
+    IndividualEvents *-> 18Nov2021WorkEventViewModel
+    IndividualEvents *-> 18Nov2021CIS611EventViewModel
+    DayOfTheWeek => "Thursday"
+    DayNumber => "18"
+    EventGridList => []
+    BorderOpacity => 0.5
+}
+
+map "19Nov2021DateViewModel : DateViewModel" as 19Nov2021DateViewModel {
+    _dateTime => "19 Nov 2021 12:00 AM"
+    IndividualEvents *-> 19Nov2021WorkEventViewModel
+    DayOfTheWeek => "Friday"
+    DayNumber => "19"
+    EventGridList => []
+    BorderOpacity => 0.5
+}
+
+map "20Nov2021DateViewModel : DateViewModel" as 20Nov2021DateViewModel {
+    _dateTime => "20 Nov 2021 12:00 AM"
+    IndividualEvents => []
+    DayOfTheWeek => "Saturday"
+    DayNumber => "20"
+    EventGridList => []
+    BorderOpacity => 0.5
+}
+
+map "14Nov2021CalendarWeekViewModel : CalendarWeekViewModel" as 14Nov2021CalendarWeekViewModel {
+    _googleCalendarService => GoogleCalendarServiceSingleton
+    DaysInAWeek => 7
+    StartDate => "14 Nov 2021"
+    DateViewModels *-> 14Nov2021DateViewModel
+    DateViewModels *-> 15Nov2021DateViewModel
+    DateViewModels *-> 16Nov2021DateViewModel
+    DateViewModels *-> 17Nov2021DateViewModel
+    DateViewModels *-> 18Nov2021DateViewModel
+    DateViewModels *-> 19Nov2021DateViewModel
+    DateViewModels *-> 20Nov2021DateViewModel
+    TimeLabels => ["12:00 AM", "1:00 AM", "2:00 AM", "3:00 AM", "4:00 AM", "5:00 AM", "6:00 AM", "7:00 AM", "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM", "7:00 PM", "8:00 PM", "9:00 PM", "10:00 PM", "11:00 PM"]
+}
+
+map "SingletonCalendarViewModel : CalendarViewModel" as SingletonCalendarViewModel {
+    _googleCalendarService => GoogleCalendarServiceSingleton
+    _calendarWeekViewModel *-> 14Nov2021CalendarWeekViewModel
+    _backlogViewModel => BacklogViewModelSingleton
+    _currentMonthAndYear => "November 2021"
+    NextWeekButtonCommand => Show21Nov2021CalendarWeekViewModelCommand
+    PreviousWeekButtonCommand => Show07Nov2021CalendarWeekViewModelCommand
+    TodayButtonCommand => Show14Nov2021CalendarWeekViewModelCommand
+    RefreshButtonCommand => RefreshWeek14Nov2021Command
+    CalendarWeekViewModel *-> 14Nov2021CalendarWeekViewModel
+    CurrentMonthAndYear => "November 2021"
+    BacklogViewModel => BacklogViewModelSingleton
+    TemporarilySetSynchronizationView => SynchronizationViewModelSingleton
+}
+
+@enduml

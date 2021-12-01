@@ -1,0 +1,10 @@
+@startuml
+class App <<partial>> {
+    + App()
+}
+class OneTooCalLoader {
+    + OneTooCalLoader()
+}
+Application <|-- App
+Window <|-- OneTooCalLoader
+@enduml

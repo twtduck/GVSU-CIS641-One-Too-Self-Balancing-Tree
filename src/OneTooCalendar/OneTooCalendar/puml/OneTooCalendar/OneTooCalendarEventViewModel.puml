@@ -1,0 +1,9 @@
+@startuml
+interface IEventDataModel {
+    StartTime : DateTime <<get>>
+    EndTime : DateTime <<get>>
+    Title : string <<get>>
+    AllDayEvent : bool <<get>>
+    Color : Color <<get>>
+}
+@enduml

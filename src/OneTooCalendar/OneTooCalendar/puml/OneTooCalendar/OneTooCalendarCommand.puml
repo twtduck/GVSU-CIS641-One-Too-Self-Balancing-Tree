@@ -1,0 +1,9 @@
+@startuml
+class OneTooCalendarCommand {
+    - <<readonly>> _executeDelegate : Action<object?>
+    + OneTooCalendarCommand(executeDelegate:Action<object?>)
+    + CanExecute(parameter:object?) : bool
+    + Execute(parameter:object?) : void
+}
+ICommand <|-- OneTooCalendarCommand
+@enduml

@@ -1,0 +1,5 @@
+@startuml
+class BacklogViewModel {
+}
+ViewModelBase <|-- BacklogViewModel
+@enduml

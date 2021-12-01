@@ -1,0 +1,21 @@
+@startuml
+!include .\\OneTooCalendar\App.xaml.puml
+!include .\\OneTooCalendar\AssemblyInfo.puml
+!include .\\OneTooCalendar\BacklogViewModel.puml
+!include .\\OneTooCalendar\CalendarViewModel.puml
+!include .\\OneTooCalendar\CalendarWeekViewModel.puml
+!include .\\OneTooCalendar\GoogleCalendarService.puml
+!include .\\OneTooCalendar\MainWindow.xaml.puml
+!include .\\OneTooCalendar\MainWindowViewModel.puml
+!include .\\OneTooCalendar\OneTooCalendarCommand.puml
+!include .\\OneTooCalendar\OneTooCalendarEventViewModel.puml
+!include .\\OneTooCalendar\SynchronizingCalendarViewModel.puml
+!include .\\OneTooCalendar\ThemeHelper.puml
+!include .\\OneTooCalendar\ViewModelBase.puml
+!include .\\OneTooCalendar\obj\Debug\net5.0-windows\.NETCoreApp,Version=v5.0.AssemblyAttributes.puml
+!include .\\OneTooCalendar\obj\Debug\net5.0-windows\App.g.puml
+!include .\\OneTooCalendar\obj\Debug\net5.0-windows\GeneratedInternalTypeHelper.g.puml
+!include .\\OneTooCalendar\obj\Debug\net5.0-windows\MainWindow.g.puml
+!include .\\OneTooCalendar\obj\Debug\net5.0-windows\OneTooCalendar.AssemblyInfo.puml
+!include .\\OneTooCalendar\obj\Debug\net5.0-windows\OneTooCalendar_3ly4yypf_wpftmp.AssemblyInfo.puml
+@enduml

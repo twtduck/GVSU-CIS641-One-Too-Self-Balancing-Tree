@@ -1,0 +1,7 @@
+@startuml
+class MainWindowViewModel {
+    - _currentView : ViewModelBase
+    + CurrentView : ViewModelBase <<get>> <<set>>
+}
+ViewModelBase <|-- MainWindowViewModel
+@enduml

@@ -1,0 +1,10 @@
+@startuml
+class SynchronizingCalendarViewModel {
+}
+class InitializationErrorViewModel {
+    + InitializationErrorViewModel(restartInitialization:Action)
+    + RestartInitializationCommand : ICommand <<get>>
+}
+ViewModelBase <|-- SynchronizingCalendarViewModel
+ViewModelBase <|-- InitializationErrorViewModel
+@enduml

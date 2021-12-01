@@ -1,0 +1,83 @@
+@startuml
+class CalendarViewModel extends ViewModelBase implements IDisposable {
+' Description: Container for all visible view models in the calendar view.
+' This includes the calendar week view model, the backlog view model, and navigation buttons
+    - <<readonly>> _googleCalendarService : GoogleCalendarService
+    - _calendarWeekViewModel : CalendarWeekViewModel
+    - _backlogViewModel : BacklogViewModel
+    - _currentMonthAndYear : string
+    + CalendarViewModel(googleCalendarService:GoogleCalendarService)
+    - OnRefreshButtonClicked() : void
+    + NextWeekButtonCommand : OneTooCalendarCommand <<get>>
+    + PreviousWeekButtonCommand : OneTooCalendarCommand <<get>>
+    + TodayButtonCommand : OneTooCalendarCommand <<get>>
+    + RefreshButtonCommand : OneTooCalendarCommand <<get>>
+    + CalendarWeekViewModel : CalendarWeekViewModel <<get>> <<set>>
+    - UpdateCurrentMonthAndYear() : void
+    + CurrentMonthAndYear : string <<get>> <<set>>
+    + BacklogViewModel : BacklogViewModel <<get>> <<set>>
+    + TemporarilySetSynchronizationView : (Action before, Action after) <<get>> <<set>>
+    + Dispose() : void
+}
+
+class CalendarWeekViewModel extends ViewModelBase implements IDisposable {
+' Description: Implementation logic for a week calendar display 
+    - <<readonly>> _googleCalendarService : GoogleCalendarService
+    + <<const>> DaysInAWeek : int = 7
+    + CalendarWeekViewModel(startDate:DateTime, googleCalendarService:GoogleCalendarService)
+    + StartDate : DateTime <<get>>
+    + DateViewModels : List<DateViewModel> <<get>>
+    + TimeLabels : List<HourLabelViewModel> <<get>>
+    + <<async>> TryRefreshEventsAsync(token:CancellationToken) : Task<bool>
+    + Dispose() : void
+}
+
+class DateViewModel extends ViewModelBase implements IDisposable {
+' Description: View model for a single day in the calendar week view
+    - <<readonly>> _dateTime : DateTime
+    - <<readonly>> IndividualEvents : List<EventViewModel>
+    + DateViewModel(dateTime:DateTime)
+    - {static} BuildEventGrid(eventDataModels:IList<IEventDataModel>, dateMidnight:DateTime, individualEvents:List<EventViewModel>) : Grid
+    + DayOfTheWeek : string <<get>>
+    + DayNumber : int <<get>>
+    + EventGridList : ObservableCollection<Grid> <<get>>
+    + BorderOpacity : double <<get>> <<set>>
+    + UpdateFromEventsList(events:IList<IEventDataModel>) : void
+    + Dispose() : void
+}
+
+class EventViewModel extends ViewModelBase implements IDisposable {
+' Description: View model for a single event in the calendar week view
+    - _dragging : bool
+    + EventViewModel()
+    - OnLeftButtonDown(sender:object, e:MouseButtonEventArgs) : void
+    - OnLeftButtonUp(sender:object, e:MouseButtonEventArgs) : void
+    - OnMouseMove(sender:object, e:MouseEventArgs) : void
+    + Dispose() : void
+}
+
+class QuarterHourPeriodViewModel extends ViewModelBase {
+' Description: View model for a single quarter hour period in the calendar week view
+    - <<readonly>> _time : DateTime
+    - <<readonly>> _separatorIsVisible : bool
+    + QuarterHourPeriodViewModel(time:DateTime, separatorIsVisible:bool)
+    + SeparatorVisibility : Visibility <<get>>
+    + <<override>> ToString() : string
+}
+
+abstract class ViewModelBase implements INotifyPropertyChanged {
+' Description: Base class for all view models. Makes programatically updating properties easier.
+    +  <<event>> PropertyChanged : PropertyChangedEventHandler? 
+    # OnPropertyChanged(propertyName:string) : void
+}
+
+interface IDisposable {
+' Description: Interface for objects that can be disposed.
+    + Dispose() : void
+}
+
+interface INotifyPropertyChanged {
+' Description: Interface for objects that can notify when a property changes.
+    +  <<event>> PropertyChanged : PropertyChangedEventHandler? 
+}
+@enduml

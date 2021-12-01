@@ -1,0 +1,22 @@
+@startuml
+class CalendarViewModel {
+    - <<readonly>> _googleCalendarService : GoogleCalendarService
+    - _calendarWeekViewModel : CalendarWeekViewModel
+    - _backlogViewModel : BacklogViewModel
+    - _currentMonthAndYear : string
+    + CalendarViewModel(googleCalendarService:GoogleCalendarService)
+    - OnRefreshButtonClicked() : void
+    + NextWeekButtonCommand : OneTooCalendarCommand <<get>>
+    + PreviousWeekButtonCommand : OneTooCalendarCommand <<get>>
+    + TodayButtonCommand : OneTooCalendarCommand <<get>>
+    + RefreshButtonCommand : OneTooCalendarCommand <<get>>
+    + CalendarWeekViewModel : CalendarWeekViewModel <<get>> <<set>>
+    - UpdateCurrentMonthAndYear() : void
+    + CurrentMonthAndYear : string <<get>> <<set>>
+    + BacklogViewModel : BacklogViewModel <<get>> <<set>>
+    + TemporarilySetSynchronizationView : (Action before, Action after) <<get>> <<set>>
+    + Dispose() : void
+}
+ViewModelBase <|-- CalendarViewModel
+IDisposable <|-- CalendarViewModel
+@enduml

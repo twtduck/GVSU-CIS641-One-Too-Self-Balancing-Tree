@@ -1,0 +1,13 @@
+@startuml
+interface ICalendarService {
+}
+class GoogleCalendarService {
+    + <<async>> InitializeServiceAsync(token:CancellationToken) : Task<bool>
+    + <<async>> GetEventsForDateRangeAsync(startDate:DateTime, endDate:DateTime, token:CancellationToken) : Task<IList<IEventDataModel>?>
+    - _googleCalendarService : CalendarService?
+    - <<async>> GetCalendarService(token:CancellationToken) : Task<CalendarService?>
+    - <<async>> GetCalendarsAsync(token:CancellationToken) : Task<Calendar[]>
+    - <<async>> GetCalendarEventsAsync(googleCalendar:Calendar, startTime:DateTime, endTime:DateTime, token:CancellationToken) : Task<IList<IEventDataModel>?>
+}
+ICalendarService <|-- GoogleCalendarService
+@enduml

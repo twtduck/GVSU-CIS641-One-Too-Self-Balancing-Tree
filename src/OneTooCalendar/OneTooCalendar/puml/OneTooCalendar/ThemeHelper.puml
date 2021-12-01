@@ -1,0 +1,22 @@
+@startuml
+class ThemeHelper {
+    + {static} CalendarDividerColor : Color <<get>>
+    + {static} CalendarDivider : Brush <<get>>
+    - {static} PrimaryColors : Color[] <<get>>
+    - {static} _calendars : List<string>
+    + {static} ColorFromCalendar(calendar:Calendar) : Color
+}
+class CalendarEvent {
+    - <<readonly>> _sourceCalendar : Calendar
+    + CalendarEvent(sourceCalendar:Calendar)
+    + AllDayEvent : bool <<get>> <<init>>
+    + StartTime : DateTime <<get>> <<init>>
+    + EndTime : DateTime <<get>> <<init>>
+    + Title : string <<get>> <<init>>
+    + Location : string <<get>> <<init>>
+    + Color : Color <<get>>
+}
+class CalendarFeed {
+}
+IEventDataModel <|-- CalendarEvent
+@enduml

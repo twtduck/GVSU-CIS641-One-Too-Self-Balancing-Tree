@@ -1,0 +1,56 @@
+@startuml
+class CalendarWeekViewModel {
+    - <<readonly>> _googleCalendarService : GoogleCalendarService
+    + <<const>> DaysInAWeek : int = 7
+    + CalendarWeekViewModel(startDate:DateTime, googleCalendarService:GoogleCalendarService)
+    + StartDate : DateTime <<get>>
+    + DateViewModels : List<DateViewModel> <<get>>
+    + TimeLabels : List<HourLabelViewModel> <<get>>
+    + <<async>> TryRefreshEventsAsync(token:CancellationToken) : Task<bool>
+    + Dispose() : void
+}
+class HourLabelViewModel {
+    + HourLabelViewModel(hourNumber:int)
+    + LabelContent : string <<get>>
+}
+class DateViewModel {
+    - <<readonly>> _dateTime : DateTime
+    - <<readonly>> IndividualEvents : List<EventViewModel>
+    + DateViewModel(dateTime:DateTime)
+    - {static} BuildEventGrid(eventDataModels:IList<IEventDataModel>, dateMidnight:DateTime, individualEvents:List<EventViewModel>) : Grid
+    + DayOfTheWeek : string <<get>>
+    + DayNumber : int <<get>>
+    + EventGridList : ObservableCollection<Grid> <<get>>
+    + BorderOpacity : double <<get>> <<set>>
+    + UpdateFromEventsList(events:IList<IEventDataModel>) : void
+    + Dispose() : void
+}
+class EventViewModel {
+    - _dragging : bool
+    + EventViewModel()
+    - OnLeftButtonDown(sender:object, e:MouseButtonEventArgs) : void
+    - OnLeftButtonUp(sender:object, e:MouseButtonEventArgs) : void
+    - OnMouseMove(sender:object, e:MouseEventArgs) : void
+    + Dispose() : void
+}
+class HourPeriodViewModel {
+    + HourPeriodViewModel(hourTime:DateTime)
+    + QuarterHourPeriods : List<QuarterHourPeriodViewModel> <<get>>
+}
+class QuarterHourPeriodViewModel {
+    - <<readonly>> _time : DateTime
+    - <<readonly>> _separatorIsVisible : bool
+    + QuarterHourPeriodViewModel(time:DateTime, separatorIsVisible:bool)
+    + SeparatorVisibility : Visibility <<get>>
+    + <<override>> ToString() : string
+}
+ViewModelBase <|-- CalendarWeekViewModel
+IDisposable <|-- CalendarWeekViewModel
+ViewModelBase <|-- HourLabelViewModel
+ViewModelBase <|-- DateViewModel
+IDisposable <|-- DateViewModel
+Border <|-- EventViewModel
+IDisposable <|-- EventViewModel
+ViewModelBase <|-- HourPeriodViewModel
+ViewModelBase <|-- QuarterHourPeriodViewModel
+@enduml

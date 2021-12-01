@@ -1,0 +1,11 @@
+@startuml
+class MainWindow <<partial>> {
+    + MainWindow()
+    - StartInitializeApplication() : void
+    <<async>> InitializeApplicationAsync(token:CancellationToken) : Task
+    + MainWindowViewModel : MainWindowViewModel <<get>>
+}
+class TaskExtensions <<static>> {
+    + {static} RunCatchingFailure(task:T) : T
+}
+@enduml
