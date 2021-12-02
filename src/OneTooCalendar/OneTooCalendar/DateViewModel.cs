@@ -90,6 +90,12 @@ namespace OneTooCalendar
 					hsb = new Hsb(hsb.Hue, hsb.Saturation / 3, hsb.Brightness);
 					eventColor = hsb.ToColor();
 				}
+				else
+				{
+					var hsb = eventColor.ToHsb();
+					hsb = new Hsb(hsb.Hue, hsb.Saturation, hsb.Brightness / (1.5 - hsb.Saturation / 2));
+					eventColor = hsb.ToColor();
+				}
 				thisEventGridEventViewModel.Background = new SolidColorBrush(eventColor);
 				thisEventGridEventViewModel.BorderThickness = new Thickness(0);
 				thisEventGridEventViewModel.CornerRadius = new CornerRadius(4);

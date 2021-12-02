@@ -6,12 +6,13 @@ namespace OneTooCalendar
 	public class CalendarEvent : IEventDataModel
 	{
 		private readonly CalendarDataModel _sourceCalendar;
+		private readonly Color _calendarBackgroundColor;
 
 		public CalendarEvent(CalendarDataModel sourceCalendar, string eventId)
 		{
 			_sourceCalendar = sourceCalendar;
-			Color = ThemeHelper.ColorFromCalendar(_sourceCalendar);
-			SyncInfo = new EventSynchronizationInfo(_sourceCalendar.Id, eventId);
+			_calendarBackgroundColor = ThemeHelper.GetCalendarBackgroundColor(sourceCalendar);
+			SyncInfo = new EventSynchronizationInfo(sourceCalendar.Id, eventId);
 		}
 
 		public bool AllDayEvent { get; init; }
@@ -20,7 +21,8 @@ namespace OneTooCalendar
 		public string Title { get; init; } = "";
 		public string Location { get; init; } = "";
 		public string Description { get; init; } = "";
-		public Color Color { get; }
+		public Color Color => ThemeHelper.TryGetEventBackgroundColor(EventColorId ?? _sourceCalendar.ColorId) ?? _calendarBackgroundColor;
 		public EventSynchronizationInfo SyncInfo { get; }
+		public int? EventColorId { get; init; }
 	}
 }

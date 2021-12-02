@@ -5,10 +5,12 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Media;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Services;
 using Google.Apis.Util.Store;
+using Colors = Google.Apis.Calendar.v3.Data.Colors;
 
 namespace OneTooCalendar
 {
@@ -21,6 +23,8 @@ namespace OneTooCalendar
 			var googleCalendarService = await GetCalendarService(token);
 			if (googleCalendarService is null)
 				return false;
+
+			await UpdateColorDictionaries(token);
 
 			var calendars = await GetCalendarsAsync(token);
 			return calendars.Any();
@@ -66,6 +70,7 @@ namespace OneTooCalendar
 			}
 			catch (Exception)
 			{
+				Debug.Fail("");
 				return null;
 			}
 
@@ -79,6 +84,91 @@ namespace OneTooCalendar
 			_googleCalendarService = service;
 
 			return service;
+		}
+
+		public async Task<Colors?> GetCalendarColors(CancellationToken token)
+		{
+			var service = _googleCalendarService;
+			if (service is null)
+				return default;
+
+			try
+			{
+				return await service.Colors.Get().ExecuteAsync(token);
+			}
+			catch (Exception)
+			{
+				Debug.Fail("");
+				return default;
+			}
+		}
+
+		private async Task UpdateColorDictionaries(CancellationToken token)
+		{
+			try
+			{
+				if (ThemeHelper.CalendarBackgroundColorMap is null || ThemeHelper.CalendarForegroundColorMap is null ||
+					ThemeHelper.EventBackgroundColorMap is null || ThemeHelper.EventForegroundColorMap is null)
+				{
+					var colorsResponse = await GetCalendarColors(token);
+					if (colorsResponse is not null)
+					{
+						{
+							var calendarBackgroundColorMap = new Dictionary<int, Color>();
+							if (ThemeHelper.CalendarBackgroundColorMap is null)
+							{
+								foreach (var keypair in colorsResponse.Calendar)
+								{
+									calendarBackgroundColorMap.Add(int.Parse(keypair.Key), (Color)ColorConverter.ConvertFromString(keypair.Value.Background));
+								}
+
+								ThemeHelper.CalendarBackgroundColorMap = calendarBackgroundColorMap;
+							}
+						}
+						{
+							var calendarForegroundColorMap = new Dictionary<int, Color>();
+							if (ThemeHelper.CalendarForegroundColorMap is null)
+							{
+								foreach (var keypair in colorsResponse.Calendar)
+								{
+									calendarForegroundColorMap.Add(int.Parse(keypair.Key), (Color)ColorConverter.ConvertFromString(keypair.Value.Foreground));
+								}
+
+								ThemeHelper.CalendarForegroundColorMap = calendarForegroundColorMap;
+							}
+						}
+						{
+							var eventBackgroundColorMap = new Dictionary<int, Color>();
+							if (ThemeHelper.EventBackgroundColorMap is null)
+							{
+								foreach (var keypair in colorsResponse.Event__)
+								{
+									eventBackgroundColorMap.Add(int.Parse(keypair.Key), (Color)ColorConverter.ConvertFromString(keypair.Value.Background));
+								}
+
+								ThemeHelper.EventBackgroundColorMap = eventBackgroundColorMap;
+							}
+						}
+						{
+							var eventForegroundColorMap = new Dictionary<int, Color>();
+							if (ThemeHelper.EventForegroundColorMap is null)
+							{
+								foreach (var keypair in colorsResponse.Event__)
+								{
+									eventForegroundColorMap.Add(int.Parse(keypair.Key), (Color)ColorConverter.ConvertFromString(keypair.Value.Foreground));
+								}
+
+								ThemeHelper.EventForegroundColorMap = eventForegroundColorMap;
+							}
+						}
+					}
+				}
+			}
+			catch
+			{
+				Debug.Fail("");
+				// ignored
+			}
 		}
 
 		public async Task<CalendarDataModel[]> GetCalendarsAsync(CancellationToken token)
@@ -96,10 +186,11 @@ namespace OneTooCalendar
 						.Select(x => x.Id)
 						.Select(service.Calendars.Get)
 						.Select(x => x.ExecuteAsync(token))
-					).Result.Select(x => new CalendarDataModel(x)).ToArray();
+					).Result.Select(x => new CalendarDataModel(x, calList.Items.Single(y => y.Id == x.Id))).ToArray();
 			}
 			catch (Exception)
 			{
+				Debug.Fail("");
 				return Array.Empty<CalendarDataModel>();
 			}
 		}
@@ -135,6 +226,7 @@ namespace OneTooCalendar
 						Title = singleEventsItem.Summary,
 						Location = singleEventsItem.Location,
 						Description = singleEventsItem.Description,
+						EventColorId = int.TryParse(singleEventsItem.ColorId, out var colorId) ? colorId : default,
 					});
 				}
 
@@ -142,6 +234,7 @@ namespace OneTooCalendar
 			}
 			catch (Exception)
 			{
+				Debug.Fail("");
 				return null;
 			}
 
@@ -167,6 +260,7 @@ namespace OneTooCalendar
 			}
 			catch (Exception)
 			{
+				Debug.Fail("");
 				return false;
 			}
 		}
