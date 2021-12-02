@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 
 namespace OneTooCalendar
 {
@@ -11,12 +13,16 @@ namespace OneTooCalendar
 		private readonly GoogleCalendarService _googleCalendarService;
 		public const int DaysInAWeek = 7;
 
-		public CalendarWeekViewModel(DateTime startDate, GoogleCalendarService googleCalendarService)
+		public CalendarWeekViewModel(
+			DateTime startDate,
+			GoogleCalendarService googleCalendarService,
+			CalendarViewModel calendarViewModel
+			)
 		{
 			_googleCalendarService = googleCalendarService;
 			for (var i = 0; i < DaysInAWeek; i++)
 			{
-				DateViewModels.Add(new DateViewModel(startDate + TimeSpan.FromDays(i), new EventCommandFactory(_googleCalendarService))
+				DateViewModels.Add(new DateViewModel(startDate + TimeSpan.FromDays(i), new EventCommandFactory(_googleCalendarService, calendarViewModel))
 				{
 					BorderOpacity = i == 0 ? 0 : 1
 				});
@@ -36,15 +42,16 @@ namespace OneTooCalendar
 
 		public async Task<bool> TryRefreshEventsAsync(CancellationToken token)
 		{
+			App.AssertUIThread();
 			var events = await _googleCalendarService.GetEventsForDateRangeAsync(StartDate, StartDate.AddDays(DaysInAWeek), token);
 			if (events is null)
 				return false;
+
 			foreach (var dateViewModel in DateViewModels)
 			{
 				dateViewModel.UpdateFromEventsList(events);
 			}
 			return true;
-
 		}
 
 		public void Dispose()

@@ -17,6 +17,11 @@ namespace OneTooCalendar
 		private readonly EventCommandFactory _eventCommandFactory;
 
 		private readonly List<EventGridEventViewModel> _individualEvents = new List<EventGridEventViewModel>();
+		public bool HasEvent(EventSynchronizationInfo eventInfo)
+		{
+			var hasEvent = _individualEvents.Any(e => e.EventSynchronizationInfo.Equals(eventInfo));
+			return hasEvent;
+		}
 
 		public DateViewModel(DateTime dateTime, EventCommandFactory eventCommandFactory)
 		{

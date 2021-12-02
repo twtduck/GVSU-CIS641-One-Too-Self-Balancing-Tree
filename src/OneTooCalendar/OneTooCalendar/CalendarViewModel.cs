@@ -14,15 +14,32 @@ namespace OneTooCalendar
 		public CalendarViewModel(GoogleCalendarService googleCalendarService)
 		{
 			_googleCalendarService = googleCalendarService;
-			_calendarWeekViewModel = new CalendarWeekViewModel(GetFirstDayOfCurrentWeek(), _googleCalendarService);
+			_calendarWeekViewModel = new CalendarWeekViewModel(
+				GetFirstDayOfCurrentWeek(),
+				_googleCalendarService,
+				this
+				);
 			UpdateCurrentMonthAndYear();
 			_backlogViewModel = new BacklogViewModel();
-			PreviousWeekButtonCommand = new OneTooCalendarCommand(_ => CalendarWeekViewModel =
-				new CalendarWeekViewModel(CalendarWeekViewModel.StartDate.AddDays(-CalendarWeekViewModel.DaysInAWeek), _googleCalendarService));
-			NextWeekButtonCommand = new OneTooCalendarCommand(_ => CalendarWeekViewModel =
-				new CalendarWeekViewModel(CalendarWeekViewModel.StartDate.AddDays(CalendarWeekViewModel.DaysInAWeek), _googleCalendarService));
-			TodayButtonCommand = new OneTooCalendarCommand(_ =>
-				CalendarWeekViewModel = new CalendarWeekViewModel(GetFirstDayOfCurrentWeek(), _googleCalendarService));
+			PreviousWeekButtonCommand = new OneTooCalendarCommand(
+				_ => CalendarWeekViewModel =
+					new CalendarWeekViewModel(
+						CalendarWeekViewModel.StartDate.AddDays(-CalendarWeekViewModel.DaysInAWeek),
+						_googleCalendarService,
+						this
+						)
+				);
+			NextWeekButtonCommand = new OneTooCalendarCommand(
+				_ => CalendarWeekViewModel =
+					new CalendarWeekViewModel(
+						CalendarWeekViewModel.StartDate.AddDays(CalendarWeekViewModel.DaysInAWeek),
+						_googleCalendarService,
+						this
+						)
+				);
+			TodayButtonCommand = new OneTooCalendarCommand(
+				_ => CalendarWeekViewModel = new CalendarWeekViewModel(GetFirstDayOfCurrentWeek(), _googleCalendarService, this)
+				);
 			RefreshButtonCommand = new OneTooCalendarCommand(_ =>
 					OnRefreshButtonClicked()
 				);
