@@ -12,8 +12,8 @@ namespace OneTooCalendar
 		public static Color CalendarDividerColor { get; } = (Color)ColorConverter.ConvertFromString("#999999");
 		public static Brush CalendarDivider { get; } = new SolidColorBrush(CalendarDividerColor);
 
-		private static Color[] PrimaryColors { get; } = Enum.GetValues(typeof(MaterialDesignColors.PrimaryColor)).Cast<PrimaryColor>().Cast<int>()
-			.Cast<MaterialDesignColor>().Select(x => MaterialDesignColors.SwatchHelper.Lookup[x]).ToArray();
+		private static Color[] PrimaryColors { get; } = Enum.GetValues(typeof(PrimaryColor)).Cast<PrimaryColor>().Cast<int>()
+			.Cast<MaterialDesignColor>().Select(x => SwatchHelper.Lookup[x]).ToArray();
 
 		private static List<string> _calendars = new List<string>();
 

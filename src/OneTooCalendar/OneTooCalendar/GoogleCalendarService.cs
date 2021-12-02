@@ -71,7 +71,7 @@ namespace OneTooCalendar
 			}
 
 			// Create Google Calendar API service.
-			var service = new CalendarService(new BaseClientService.Initializer()
+			var service = new CalendarService(new BaseClientService.Initializer
 			{
 				HttpClientInitializer = credential,
 				ApplicationName = "OneTooCalendar",

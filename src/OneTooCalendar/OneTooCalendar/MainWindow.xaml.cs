@@ -27,7 +27,7 @@ namespace OneTooCalendar
 		async Task InitializeApplicationAsync(CancellationToken token)
 		{
 			var apiService = new GoogleCalendarService();
-			var connectSucceed = (await apiService.InitializeServiceAsync(token)) && !token.IsCancellationRequested;
+			var connectSucceed = await apiService.InitializeServiceAsync(token) && !token.IsCancellationRequested;
 			if (connectSucceed)
 			{
 				var calendar = new CalendarViewModel(apiService);

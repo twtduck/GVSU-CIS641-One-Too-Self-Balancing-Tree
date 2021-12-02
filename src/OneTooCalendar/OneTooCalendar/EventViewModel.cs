@@ -14,8 +14,8 @@ namespace OneTooCalendar
 			MouseLeftButtonDown += OnLeftButtonDown;
 			MouseLeftButtonUp += OnLeftButtonUp;
 			ContextMenu = new ContextMenu();
-			ContextMenu.Items.Add(new MenuItem() { Header = EventCommandFactory.CreateDeleteEventControlContent(), Command = eventCommandFactory.DeleteEventCommand(eventSynchronizationInfo) });
-			ContextMenu.Items.Add(new MenuItem() { Header = EventCommandFactory.CreateEditEventControlContent(), Command = eventCommandFactory.CreateEditEventCommand(eventSynchronizationInfo) });
+			ContextMenu.Items.Add(new MenuItem { Header = EventCommandFactory.CreateDeleteEventControlContent(), Command = eventCommandFactory.DeleteEventCommand(eventSynchronizationInfo) });
+			ContextMenu.Items.Add(new MenuItem { Header = EventCommandFactory.CreateEditEventControlContent(), Command = eventCommandFactory.CreateEditEventCommand(eventSynchronizationInfo) });
 		}
 
 		private void OnLeftButtonDown(object sender, MouseButtonEventArgs e)

@@ -48,7 +48,7 @@ namespace OneTooCalendar
 				{
 					new Border
 					{
-						Child = new Path()
+						Child = new Path
 						{
 							Fill = Brushes.Black,
 							Data = Geometry.Parse(
@@ -71,7 +71,7 @@ namespace OneTooCalendar
 				{
 					new Border
 					{
-						Child = new Path()
+						Child = new Path
 						{
 							Fill = Brushes.Black,
 							Data = Geometry.Parse(
