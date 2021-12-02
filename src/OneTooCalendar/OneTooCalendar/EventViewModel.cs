@@ -6,18 +6,19 @@ namespace OneTooCalendar
 {
 	public class EventGridEventViewModel : Border, IDisposable
 	{
-		public EventSynchronizationInfo EventSynchronizationInfo { get; }
+		public IEventDataModel EventDataModel { get; }
+		public EventSynchronizationInfo EventSynchronizationInfo => EventDataModel.SyncInfo;
 		private bool _dragging;
 
-		public EventGridEventViewModel(EventCommandFactory eventCommandFactory, EventSynchronizationInfo eventSynchronizationInfo)
+		public EventGridEventViewModel(EventCommandFactory eventCommandFactory, IEventDataModel eventDataModel)
 		{
-			EventSynchronizationInfo = eventSynchronizationInfo;
+			EventDataModel = eventDataModel;
 			MouseMove += OnMouseMove;
 			MouseLeftButtonDown += OnLeftButtonDown;
 			MouseLeftButtonUp += OnLeftButtonUp;
 			ContextMenu = new ContextMenu();
 			ContextMenu.Items.Add(new MenuItem { Header = EventCommandFactory.CreateDeleteEventControlContent(), Command = eventCommandFactory.DeleteEventCommand(EventSynchronizationInfo) });
-			ContextMenu.Items.Add(new MenuItem { Header = EventCommandFactory.CreateEditEventControlContent(), Command = eventCommandFactory.CreateEditEventCommand(EventSynchronizationInfo) });
+			ContextMenu.Items.Add(new MenuItem { Header = EventCommandFactory.CreateEditEventControlContent(), Command = eventCommandFactory.CreateEditEventCommand(EventDataModel) });
 		}
 
 		private void OnLeftButtonDown(object sender, MouseButtonEventArgs e)

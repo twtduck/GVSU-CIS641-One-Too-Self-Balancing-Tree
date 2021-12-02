@@ -42,14 +42,16 @@ namespace OneTooCalendar
 				);
 		}
 
-		public ICommand CreateEditEventCommand(EventSynchronizationInfo eventSynchronizationInfo)
+		public ICommand CreateEditEventCommand(IEventDataModel eventDataModel)
 		{
-			return new OneTooCalendarCommand(_ => EditEvent(eventSynchronizationInfo));
+			return new OneTooCalendarCommand(_ => EditEvent(eventDataModel));
 		}
 
-		private void EditEvent(EventSynchronizationInfo eventSynchronizationInfo)
+		private void EditEvent(IEventDataModel eventDataModel)
 		{
-			throw new NotImplementedException();
+			var eventDetailsViewModel = new EventDetailsViewModel(eventDataModel);
+			var restoreAction = _calendarViewModel.SetMainViewTemporarily.Invoke(eventDetailsViewModel);
+			eventDetailsViewModel.RestoreAction = restoreAction;
 		}
 
 		public static StackPanel CreateEditEventControlContent()

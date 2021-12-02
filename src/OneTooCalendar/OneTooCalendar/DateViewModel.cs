@@ -77,7 +77,7 @@ namespace OneTooCalendar
 
 			foreach (var blockInfo in blockInfos)
 			{
-				var thisEventGridEventViewModel = new EventGridEventViewModel(eventCommandFactory, blockInfo.EventDataModel.SyncInfo);
+				var thisEventGridEventViewModel = new EventGridEventViewModel(eventCommandFactory, blockInfo.EventDataModel);
 				thisEventGridEventViewModel.SetValue(Grid.RowProperty, blockInfo.StartBlock);
 				thisEventGridEventViewModel.SetValue(Grid.RowSpanProperty, blockInfo.Duration);
 				thisEventGridEventViewModel.SetValue(Grid.ColumnProperty, blockInfo.Column);
