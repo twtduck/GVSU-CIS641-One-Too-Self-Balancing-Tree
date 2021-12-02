@@ -7,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
-using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
 using Google.Apis.Util.Store;
 
@@ -82,11 +81,11 @@ namespace OneTooCalendar
 			return service;
 		}
 
-		private async Task<Calendar[]> GetCalendarsAsync(CancellationToken token)
+		public async Task<CalendarDataModel[]> GetCalendarsAsync(CancellationToken token)
 		{
 			var service = _googleCalendarService;
 			if (service is null)
-				return Array.Empty<Calendar>();
+				return Array.Empty<CalendarDataModel>();
 
 			try
 			{
@@ -97,15 +96,15 @@ namespace OneTooCalendar
 						.Select(x => x.Id)
 						.Select(service.Calendars.Get)
 						.Select(x => x.ExecuteAsync(token))
-					).Result;
+					).Result.Select(x => new CalendarDataModel(x)).ToArray();
 			}
 			catch (Exception)
 			{
-				return Array.Empty<Calendar>();
+				return Array.Empty<CalendarDataModel>();
 			}
 		}
 
-		private async Task<IList<IEventDataModel>?> GetCalendarEventsAsync(Calendar googleCalendar, DateTime startTime, DateTime endTime, CancellationToken token)
+		private async Task<IList<IEventDataModel>?> GetCalendarEventsAsync(CalendarDataModel calendar, DateTime startTime, DateTime endTime, CancellationToken token)
 		{
 			var service = _googleCalendarService;
 			if (service is null)
@@ -113,7 +112,7 @@ namespace OneTooCalendar
 
 			try
 			{
-				var eventsListRequest = service.Events.List(googleCalendar.Id);
+				var eventsListRequest = service.Events.List(calendar.Id);
 				eventsListRequest.TimeMin = startTime;
 				eventsListRequest.TimeMax = endTime;
 				eventsListRequest.ShowDeleted = false;
@@ -122,7 +121,7 @@ namespace OneTooCalendar
 				var eventsFound = new List<IEventDataModel>();
 				foreach (var singleEventsItem in singleEvents.Items)
 				{
-					eventsFound.Add(new CalendarEvent(googleCalendar, singleEventsItem.Id)
+					eventsFound.Add(new CalendarEvent(calendar, singleEventsItem.Id)
 					{
 						AllDayEvent = !singleEventsItem.Start.DateTime.HasValue,
 						StartTime = singleEventsItem.Start.DateTime ??
@@ -135,6 +134,7 @@ namespace OneTooCalendar
 								: ErrorGettingDate()),
 						Title = singleEventsItem.Summary,
 						Location = singleEventsItem.Location,
+						Description = singleEventsItem.Description,
 					});
 				}
 

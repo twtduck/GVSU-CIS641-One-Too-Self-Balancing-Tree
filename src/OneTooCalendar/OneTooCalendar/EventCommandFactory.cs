@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -8,7 +7,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using System.Windows.Threading;
 
 namespace OneTooCalendar
 {
@@ -16,7 +14,6 @@ namespace OneTooCalendar
 	{
 		private readonly GoogleCalendarService _googleCalendarService;
 		private readonly CalendarViewModel _calendarViewModel;
-		private readonly SetMainViewAndReturnRestoreAction _setMainViewAndReturnRestoreAction;
 
 		public EventCommandFactory(GoogleCalendarService googleCalendarService, CalendarViewModel calendarViewModel)
 		{
@@ -47,9 +44,17 @@ namespace OneTooCalendar
 			return new OneTooCalendarCommand(_ => EditEvent(eventDataModel));
 		}
 
+
 		private void EditEvent(IEventDataModel eventDataModel)
 		{
-			var eventDetailsViewModel = new EventDetailsViewModel(eventDataModel);
+			var token = new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token;
+			_googleCalendarService.GetCalendarsAsync(token).RunCatchingFailure()
+				.ContinueWith(t => EditEvent(eventDataModel, t.Result), default(CancellationToken));
+		}
+
+		private void EditEvent(IEventDataModel eventDataModel, CalendarDataModel[] googleCalendarInfos)
+		{
+			var eventDetailsViewModel = new EventDetailsViewModel(eventDataModel, googleCalendarInfos);
 			var restoreAction = _calendarViewModel.SetMainViewTemporarily.Invoke(eventDetailsViewModel);
 			eventDetailsViewModel.RestoreAction = restoreAction;
 		}

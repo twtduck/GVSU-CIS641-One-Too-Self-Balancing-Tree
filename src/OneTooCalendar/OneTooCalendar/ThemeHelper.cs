@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Media;
-using Google.Apis.Calendar.v3.Data;
 using MaterialDesignColors;
 
 namespace OneTooCalendar
@@ -17,33 +16,12 @@ namespace OneTooCalendar
 
 		private static List<string> _calendars = new List<string>();
 
-		public static Color ColorFromCalendar(Calendar calendar)
+		public static Color ColorFromCalendar(CalendarDataModel calendar)
 		{
 			if (!_calendars.Contains(calendar.Id))
 				_calendars.Add(calendar.Id);
 
 			return PrimaryColors[_calendars.IndexOf(calendar.Id) % PrimaryColors.Length];
 		}
-
-	}
-
-	public class CalendarEvent : IEventDataModel
-	{
-		private readonly Calendar _sourceCalendar;
-
-		public CalendarEvent(Calendar sourceCalendar, string eventId)
-		{
-			_sourceCalendar = sourceCalendar;
-			Color = ThemeHelper.ColorFromCalendar(_sourceCalendar);
-			SyncInfo = new EventSynchronizationInfo(_sourceCalendar.Id, eventId);
-		}
-
-		public bool AllDayEvent { get; init; }
-		public DateTime StartTime { get; init; }
-		public DateTime EndTime { get; init; }
-		public string Title { get; init; } = "";
-		public string Location { get; init; } = "";
-		public Color Color { get; }
-		public EventSynchronizationInfo SyncInfo { get; }
 	}
 }
