@@ -1,0 +1,13 @@
+﻿<UserControl x:Class="OneTooCalendar.InitializationErrorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:OneTooCalendar"
+             mc:Ignorable="d"
+             d:DesignHeight="300" d:DesignWidth="300" d:DataContext="{d:DesignInstance local:InitializationErrorViewModel}">
+    <StackPanel VerticalAlignment="Center">
+        <TextBlock Margin="12" TextAlignment="Center" VerticalAlignment="Center">Connection error. Verify credentials and network connectivity, then try again.</TextBlock>
+        <Button Margin="12" MaxWidth="200" Content="Retry" Command="{Binding RestartInitializationCommand}" />
+    </StackPanel>
+</UserControl>
