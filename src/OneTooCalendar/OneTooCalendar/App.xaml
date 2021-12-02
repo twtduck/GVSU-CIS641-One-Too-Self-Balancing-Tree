@@ -55,6 +55,9 @@
                 <local:QuarterHourPeriodView />
             </DataTemplate>
             
+            <DataTemplate DataType="{x:Type local:ColorViewModel}">
+                <local:ColorView />
+            </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace OneTooCalendar
 {
@@ -19,12 +20,44 @@ namespace OneTooCalendar
 			EndDate = eventDataModel.EndTime;
 			EndTime = eventDataModel.EndTime;
 			Location = eventDataModel.Location;
-			Description = eventDataModel.Description;
+			Description = PrepareForDisplay(eventDataModel.Description);
 			foreach (var googleCalendarInfo in googleCalendarInfos)
 			{
 				CalendarNames.Add(googleCalendarInfo.Name);
 			}
-			SelectedCalendarName = googleCalendarInfos.First(x => x.Id == eventDataModel.SyncInfo.CalendarId).Name;
+
+			var calendarDataModel = googleCalendarInfos.First(x => x.Id == eventDataModel.SyncInfo.CalendarId);
+			SelectedCalendarName = calendarDataModel.Name;
+			Colors.Add(new ColorViewModel(ThemeHelper.GetCalendarBackgroundColor(calendarDataModel), "Calendar default"));
+			if (ThemeHelper.EventBackgroundColorMap is not null)
+			{
+				foreach (var color in ThemeHelper.EventBackgroundColorMap)
+				{
+					Colors.Add(
+						new ColorViewModel(
+							color.Value,
+							ThemeHelper.EventBackgroundColorNames.TryGetValue(color.Key, out var colorName)
+								? colorName
+								: HandleMissingColorName()
+							)
+						);
+				}
+			}
+
+			SelectedColor = eventDataModel.CustomEventColorId.HasValue && Colors.ElementAtOrDefault(eventDataModel.CustomEventColorId.Value) is { } colorViewModel
+				? colorViewModel
+				: Colors.First();
+		}
+
+		private string PrepareForDisplay(string? description)
+		{
+			return description?.Replace("<br>", Environment.NewLine) ?? string.Empty;
+		}
+
+		private string HandleMissingColorName()
+		{
+			Debug.Fail("Missing color name");
+			return "Missing color name";
 		}
 
 		public string SelectedCalendarName { get; set; }
@@ -52,6 +85,10 @@ namespace OneTooCalendar
 		public DateTime EndTime { get; set; }
 
 		public ObservableCollection<string> CalendarNames { get; } = new ObservableCollection<string>();
+
+		public ObservableCollection<ColorViewModel> Colors { get; } = new ObservableCollection<ColorViewModel>();
+
+		public ColorViewModel SelectedColor { get; set; }
 
 		public void Close()
 		{

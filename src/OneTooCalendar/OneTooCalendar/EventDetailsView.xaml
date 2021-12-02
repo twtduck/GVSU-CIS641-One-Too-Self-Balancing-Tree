@@ -81,9 +81,9 @@
             <TextBlock Grid.Row="1" Grid.Column="0" Text="Calendar" FontSize="18" Margin="8" VerticalAlignment="Center" TextAlignment="Right" />
             <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding CalendarNames}" SelectedItem="{Binding SelectedCalendarName}" VerticalContentAlignment="Center" FontSize="16"/>
             <TextBlock Grid.Row="2" Grid.Column="0" Text="Color" FontSize="18" Margin="8" VerticalAlignment="Center" TextAlignment="Right" />
-            <materialDesign:ColorPicker Grid.Row="2" Grid.Column="1" />
+            <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Colors}" SelectedItem="{Binding SelectedColor}" VerticalContentAlignment="Center" FontSize="16"/>
             <TextBlock Grid.Row="3" Grid.Column="0" Text="Description" FontSize="18" Margin="8" VerticalAlignment="Center" TextAlignment="Right" />
-            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Description}" />
+            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Description}" TextWrapping="Wrap" AcceptsReturn="True" TextAlignment="Left" />
         </Grid>
         <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>

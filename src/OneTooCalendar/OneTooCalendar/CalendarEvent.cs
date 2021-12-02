@@ -21,8 +21,8 @@ namespace OneTooCalendar
 		public string Title { get; init; } = "";
 		public string Location { get; init; } = "";
 		public string Description { get; init; } = "";
-		public Color Color => ThemeHelper.TryGetEventBackgroundColor(EventColorId ?? _sourceCalendar.ColorId) ?? _calendarBackgroundColor;
+		public Color Color => ThemeHelper.TryGetEventBackgroundColor(CustomEventColorId ?? _sourceCalendar.ColorId) ?? _calendarBackgroundColor;
 		public EventSynchronizationInfo SyncInfo { get; }
-		public int? EventColorId { get; init; }
+		public int? CustomEventColorId { get; init; }
 	}
 }

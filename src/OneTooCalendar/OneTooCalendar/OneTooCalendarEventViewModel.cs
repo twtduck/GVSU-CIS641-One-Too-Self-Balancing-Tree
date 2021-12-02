@@ -13,5 +13,6 @@ namespace OneTooCalendar
 		EventSynchronizationInfo SyncInfo { get; }
 		string Location { get; }
 		string Description { get; }
+		int? CustomEventColorId { get; }
 	}
 }

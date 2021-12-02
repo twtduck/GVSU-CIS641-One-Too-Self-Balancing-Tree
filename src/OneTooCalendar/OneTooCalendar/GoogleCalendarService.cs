@@ -226,7 +226,7 @@ namespace OneTooCalendar
 						Title = singleEventsItem.Summary,
 						Location = singleEventsItem.Location,
 						Description = singleEventsItem.Description,
-						EventColorId = int.TryParse(singleEventsItem.ColorId, out var colorId) ? colorId : default,
+						CustomEventColorId = int.TryParse(singleEventsItem.ColorId, out var colorId) ? colorId : default,
 					});
 				}
 

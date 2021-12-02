@@ -18,17 +18,17 @@ namespace OneTooCalendar
 		public static Dictionary<int, Color>? EventBackgroundColorMap { get; set; }
 		public static Dictionary<int, string> EventBackgroundColorNames => new Dictionary<int, string>
 		{
-			{ 1, "1" },
-			{ 2, "2" },
-			{ 3, "3" },
-			{ 4, "4" },
-			{ 5, "5" },
-			{ 6, "6" },
-			{ 7, "7" },
-			{ 8, "8" },
-			{ 9, "9" },
-			{ 10, "10" },
-			{ 11, "11" },
+			{ 1, "Light blue" },
+			{ 2, "Aquamarine" },
+			{ 3, "Purple" },
+			{ 4, "Red-orange" },
+			{ 5, "Yellow" },
+			{ 6, "Orange" },
+			{ 7, "Teal" },
+			{ 8, "Gray" },
+			{ 9, "Blue" },
+			{ 10, "Green" },
+			{ 11, "Red" },
 		};
 		public static Dictionary<int, Color>? CalendarForegroundColorMap { get; set; }
 		public static Dictionary<int, Color>? EventForegroundColorMap { get; set; }
@@ -40,7 +40,7 @@ namespace OneTooCalendar
 		public static Color? TryGetEventForegroundColor(int eventColorId) =>
 			EventForegroundColorMap?.TryGetValue(eventColorId, out var color) == true ? color : default(Color?);
 
-		public static Color GetCalendarBackgroundColor(CalendarDataModel calendar)
+		public static Color GetCalendarBackgroundColor(ICalendarDataModel calendar)
 		{
 			if (CalendarBackgroundColorMap?.TryGetValue(calendar.ColorId, out var color) ?? false)
 				return color;
