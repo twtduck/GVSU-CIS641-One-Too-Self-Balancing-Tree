@@ -11,7 +11,7 @@ namespace OneTooCalendar
 		bool AllDayEvent { get; }
 		Color Color { get; }
 		string Location { get; set; }
-		string Description { get; set; }
+		string? Description { get; set; }
 		int? CustomEventColorId { get; set; }
 		ICalendarDataModel Calendar { get; }
 		string EventId { get; set; }

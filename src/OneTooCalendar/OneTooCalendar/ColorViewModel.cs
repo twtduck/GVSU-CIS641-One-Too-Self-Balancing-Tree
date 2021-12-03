@@ -4,15 +4,28 @@ namespace OneTooCalendar
 {
 	public class ColorViewModel : ViewModelBase
 	{
-		public ColorViewModel(Color color, string name, int? customEventColorId)
+		private Color _color;
+
+		public ColorViewModel(Color color, string name, int customEventColorId)
 		{
-			Color = color;
+			_color = color;
 			Name = name;
 			CustomEventColorId = customEventColorId;
 		}
 		public SolidColorBrush Brush => new SolidColorBrush(Color);
-		private Color Color { get; }
+
+		public Color Color
+		{
+			get => _color;
+			set
+			{
+				_color = value;
+				OnPropertyChanged();
+				OnPropertyChanged(nameof(Brush));
+			}
+		}
+
 		public string Name { get; }
-		public int? CustomEventColorId { get; }
+		public int CustomEventColorId { get; }
 	}
 }

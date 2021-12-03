@@ -13,6 +13,8 @@ namespace OneTooCalendar
 		private readonly ICalendarDataModel[] _googleCalendarInfos;
 		private readonly IEventsApi _eventsApi;
 		private readonly Action<Action?> _refreshCurrentCalendarAndThenRunAction;
+		private string _selectedCalendarName;
+		private readonly ColorViewModel _calendarDefaultColor;
 
 		public EventDetailsViewModel(
 			IEventDataModel eventDataModel,
@@ -35,15 +37,16 @@ namespace OneTooCalendar
 			EndDate = eventDataModel.EndTime;
 			EndTime = eventDataModel.EndTime;
 			Location = eventDataModel.Location;
-			Description = PrepareForDisplay(eventDataModel.Description);
+			Description = eventDataModel.Description;
 			foreach (var googleCalendarInfo in googleCalendarInfos)
 			{
 				CalendarNames.Add(googleCalendarInfo.Name);
 			}
 
 			var calendarDataModel = googleCalendarInfos.First(x => x.Id == eventDataModel.Calendar.Id);
-			SelectedCalendarName = calendarDataModel.Name;
-			Colors.Add(new ColorViewModel(ThemeHelper.GetCalendarBackgroundColor(calendarDataModel), "Calendar default", default));
+			_selectedCalendarName = calendarDataModel.Name;
+			_calendarDefaultColor = new ColorViewModel(ThemeHelper.GetCalendarBackgroundColor(calendarDataModel), "Calendar default", 0);
+			Colors.Add(_calendarDefaultColor);
 			if (ThemeHelper.EventBackgroundColorMap is not null)
 			{
 				foreach (var color in ThemeHelper.EventBackgroundColorMap)
@@ -65,11 +68,6 @@ namespace OneTooCalendar
 				: Colors.First();
 		}
 
-		private string PrepareForDisplay(string? description)
-		{
-			return description?.Replace("<br>", Environment.NewLine) ?? string.Empty;
-		}
-
 		private string HandleMissingColorName()
 		{
 			Debug.Fail("Missing color name");
@@ -88,9 +86,25 @@ namespace OneTooCalendar
 			SelectedColor.CustomEventColorId != _eventDataModel.CustomEventColorId ||
 			SelectedCalendarName != _eventDataModel.Calendar.Name; // TODO: This is not the best way to compare calendars
 
-		public string SelectedCalendarName { get; set; }
+		public string SelectedCalendarName
+		{
+			get => _selectedCalendarName;
+			set
+			{
+				_selectedCalendarName = value;
+				_calendarDefaultColor.Color = ThemeHelper.GetCalendarBackgroundColor(_googleCalendarInfos.First(x => x.Name == value));
+			}
+		}
 
-		public string Description { get; set; }
+		public string? Description { get; set; }
+
+		public string DisplayDescription
+		{
+			get => Description?.Replace(Environment.NewLine, "<br>") ?? string.Empty;
+			set => Description = string.IsNullOrEmpty(value.Replace("<br>", Environment.NewLine)) && Description is null
+				? null
+				: value.Replace("<br>", Environment.NewLine);
+		}
 
 		public string Location { get; set; }
 
