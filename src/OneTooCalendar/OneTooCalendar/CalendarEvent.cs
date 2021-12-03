@@ -5,10 +5,10 @@ namespace OneTooCalendar
 {
 	public class CalendarEvent : IEventDataModel
 	{
-		private readonly CalendarDataModel _sourceCalendar;
+		private readonly ICalendarDataModel _sourceCalendar;
 		private readonly Color _calendarBackgroundColor;
 
-		public CalendarEvent(CalendarDataModel sourceCalendar, string eventId)
+		public CalendarEvent(ICalendarDataModel sourceCalendar, string eventId)
 		{
 			_sourceCalendar = sourceCalendar;
 			_calendarBackgroundColor = ThemeHelper.GetCalendarBackgroundColor(sourceCalendar);

@@ -15,6 +15,6 @@ namespace OneTooCalendar
 			}
 		}
 
-		public List<QuarterHourPeriodViewModel> QuarterHourPeriods { get; } = new();
+		public List<QuarterHourPeriodViewModel> QuarterHourPeriods { get; } = new List<QuarterHourPeriodViewModel>();
 	}
 }

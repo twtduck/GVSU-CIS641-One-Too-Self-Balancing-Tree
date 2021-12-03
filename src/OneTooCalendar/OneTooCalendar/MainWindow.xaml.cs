@@ -26,19 +26,25 @@ namespace OneTooCalendar
 
 		async Task InitializeApplicationAsync(CancellationToken token)
 		{
-			var apiService = new GoogleCalendarService();
-			var connectSucceed = await apiService.InitializeServiceAsync(token) && !token.IsCancellationRequested;
+			var googleCalendarApi = new GoogleCalendarApi();
+			var connectSucceed = await googleCalendarApi.InitializeServiceAsync(token) && !token.IsCancellationRequested;
 			if (connectSucceed)
 			{
-				var calendar = new CalendarViewModel(apiService);
-				await calendar.CalendarWeekViewModel.TryRefreshEventsAsync(token);
+				var eventsApi = new EventsCache(googleCalendarApi);
+				var calendarsApi = new CalendarsCache(googleCalendarApi);
+				var calendar = new CalendarViewModel(eventsApi, calendarsApi);
 				calendar.SetMainViewTemporarily = temporaryViewModel =>
 				{
+					App.AssertUIThread();
 					MainWindowViewModel.CurrentView = temporaryViewModel;
-					return () => MainWindowViewModel.CurrentView = calendar;
+					return () =>
+					{
+						App.AssertUIThread();
+						MainWindowViewModel.CurrentView = calendar;
+					};
 				};
 				Closing += (_, _) => calendar.Dispose();
-				MainWindowViewModel.CurrentView = calendar;
+				calendar.CalendarWeekViewModel.StartClearCachesAndUpdateEvents(eventsApi, () => MainWindowViewModel.CurrentView = calendar);
 			}
 			else
 			{
@@ -46,7 +52,7 @@ namespace OneTooCalendar
 			}
 		}
 
-		public MainWindowViewModel MainWindowViewModel { get; } = new();
+		public MainWindowViewModel MainWindowViewModel { get; } = new MainWindowViewModel();
 	}
 
 	public static class TaskExtensions

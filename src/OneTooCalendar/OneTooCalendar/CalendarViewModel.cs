@@ -1,23 +1,22 @@
 using System;
 using System.Globalization;
-using System.Threading;
 
 namespace OneTooCalendar
 {
 	public class CalendarViewModel : ViewModelBase, IDisposable
 	{
-		private readonly GoogleCalendarService _googleCalendarService;
+		private readonly IEventsApi _eventsApi;
 		private CalendarWeekViewModel _calendarWeekViewModel;
 		private BacklogViewModel _backlogViewModel;
 		private string _currentMonthAndYear = string.Empty;
 
-		public CalendarViewModel(GoogleCalendarService googleCalendarService)
+		public CalendarViewModel(IEventsApi eventsApi, ICalendarsApi calendarsApi)
 		{
-			_googleCalendarService = googleCalendarService;
+			_eventsApi = eventsApi;
+			var eventCommandFactory = new EventCommandFactory(eventsApi, calendarsApi, this);
 			_calendarWeekViewModel = new CalendarWeekViewModel(
 				GetFirstDayOfCurrentWeek(),
-				_googleCalendarService,
-				this
+				eventCommandFactory
 				);
 			UpdateCurrentMonthAndYear();
 			_backlogViewModel = new BacklogViewModel();
@@ -25,20 +24,18 @@ namespace OneTooCalendar
 				_ => CalendarWeekViewModel =
 					new CalendarWeekViewModel(
 						CalendarWeekViewModel.StartDate.AddDays(-CalendarWeekViewModel.DaysInAWeek),
-						_googleCalendarService,
-						this
+						eventCommandFactory
 						)
 				);
 			NextWeekButtonCommand = new OneTooCalendarCommand(
 				_ => CalendarWeekViewModel =
 					new CalendarWeekViewModel(
 						CalendarWeekViewModel.StartDate.AddDays(CalendarWeekViewModel.DaysInAWeek),
-						_googleCalendarService,
-						this
+						eventCommandFactory
 						)
 				);
 			TodayButtonCommand = new OneTooCalendarCommand(
-				_ => CalendarWeekViewModel = new CalendarWeekViewModel(GetFirstDayOfCurrentWeek(), _googleCalendarService, this)
+				_ => CalendarWeekViewModel = new CalendarWeekViewModel(GetFirstDayOfCurrentWeek(), eventCommandFactory)
 				);
 			RefreshButtonCommand = new OneTooCalendarCommand(_ =>
 					OnRefreshButtonClicked()
@@ -52,9 +49,8 @@ namespace OneTooCalendar
 
 		private void OnRefreshButtonClicked()
 		{
-			var restore = SetMainViewTemporarily(new SynchronizingCalendarViewModel());
-			CalendarWeekViewModel.TryRefreshEventsAsync(new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token)
-				.RunCatchingFailure().ContinueWith(_ => restore.Invoke()); // TODO handle completed task result
+			var restore = SetMainViewTemporarily!.Invoke(new SynchronizingCalendarViewModel());
+			_calendarWeekViewModel.StartClearCachesAndUpdateEvents(_eventsApi, restore);
 		}
 
 		public OneTooCalendarCommand NextWeekButtonCommand { get; }
@@ -69,14 +65,12 @@ namespace OneTooCalendar
 			get => _calendarWeekViewModel;
 			set
 			{
-				var restoreCalendar = SetMainViewTemporarily(new SynchronizingCalendarViewModel());
+				var restoreCalendar = SetMainViewTemporarily!(new SynchronizingCalendarViewModel());
 				_calendarWeekViewModel.Dispose();
 				_calendarWeekViewModel = value;
 				UpdateCurrentMonthAndYear();
 				OnPropertyChanged();
-				CalendarWeekViewModel.TryRefreshEventsAsync(new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token)
-					.RunCatchingFailure()
-					.ContinueWith(_ => restoreCalendar.Invoke()); // TODO handle false
+				CalendarWeekViewModel.StartRefreshEventsForWeekFromCache(_eventsApi, restoreCalendar);
 			}
 		}
 
@@ -107,13 +101,13 @@ namespace OneTooCalendar
 			}
 		}
 
-		public SetMainViewAndReturnRestoreAction SetMainViewTemporarily { get; set; }
+		public SetMainViewAndReturnRestoreAction? SetMainViewTemporarily { get; set; }
 
 		public void Dispose()
 		{
 			_calendarWeekViewModel.Dispose();
 		}
 	}
-	
+
 	public delegate Action SetMainViewAndReturnRestoreAction(ViewModelBase viewModel);
 }

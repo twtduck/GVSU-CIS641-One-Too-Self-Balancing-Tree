@@ -14,9 +14,7 @@ using Colors = Google.Apis.Calendar.v3.Data.Colors;
 
 namespace OneTooCalendar
 {
-	public interface ICalendarService { }
-
-	public class GoogleCalendarService : ICalendarService
+	public class GoogleCalendarApi : ICalendarSource
 	{
 		public async Task<bool> InitializeServiceAsync(CancellationToken token)
 		{
@@ -27,20 +25,24 @@ namespace OneTooCalendar
 			await UpdateColorDictionaries(token);
 
 			var calendars = await GetCalendarsAsync(token);
-			return calendars.Any();
+			return calendars?.Any() == true;
 		}
 
 		public async Task<IList<IEventDataModel>?> GetEventsForDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken token)
 		{
 			Debug.Assert(_googleCalendarService is not null);
 			var calendarFeeds = await GetCalendarsAsync(token);
+			if (calendarFeeds is null)
+				return null;
+
 			var events = new List<IEventDataModel>();
-			var getEventsResults = await Task.WhenAll(calendarFeeds.Select(x => GetCalendarEventsAsync(x, startDate, endDate, token)));
+			var getEventsResults = await Task.WhenAll(
+				calendarFeeds.Select(x => GetCalendarEventsAsync(x, startDate, endDate, token))
+				);
 			if (getEventsResults.Any(x => x is null))
 				return null;
 
 			events.AddRange(getEventsResults.SelectMany(x => x!));
-
 
 			return events;
 		}
@@ -171,11 +173,11 @@ namespace OneTooCalendar
 			}
 		}
 
-		public async Task<CalendarDataModel[]> GetCalendarsAsync(CancellationToken token)
+		public async Task<ICalendarDataModel[]?> GetCalendarsAsync(CancellationToken token)
 		{
 			var service = _googleCalendarService;
 			if (service is null)
-				return Array.Empty<CalendarDataModel>();
+				return default;
 
 			try
 			{
@@ -191,11 +193,11 @@ namespace OneTooCalendar
 			catch (Exception)
 			{
 				Debug.Fail("");
-				return Array.Empty<CalendarDataModel>();
+				return default;
 			}
 		}
 
-		private async Task<IList<IEventDataModel>?> GetCalendarEventsAsync(CalendarDataModel calendar, DateTime startTime, DateTime endTime, CancellationToken token)
+		private async Task<IList<IEventDataModel>?> GetCalendarEventsAsync(ICalendarDataModel calendar, DateTime startTime, DateTime endTime, CancellationToken token)
 		{
 			var service = _googleCalendarService;
 			if (service is null)

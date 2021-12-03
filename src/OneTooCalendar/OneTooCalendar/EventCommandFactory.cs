@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -12,31 +10,27 @@ namespace OneTooCalendar
 {
 	public class EventCommandFactory
 	{
-		private readonly GoogleCalendarService _googleCalendarService;
+		private readonly IEventsApi _eventsApi;
+		private readonly ICalendarsApi _calendarsApi;
 		private readonly CalendarViewModel _calendarViewModel;
 
-		public EventCommandFactory(GoogleCalendarService googleCalendarService, CalendarViewModel calendarViewModel)
+		public EventCommandFactory(IEventsApi eventsApi, ICalendarsApi calendarsApi, CalendarViewModel calendarViewModel)
 		{
-			_googleCalendarService = googleCalendarService;
+			_eventsApi = eventsApi;
+			_calendarsApi = calendarsApi;
 			_calendarViewModel = calendarViewModel;
 		}
-		public ICommand DeleteEventCommand(EventSynchronizationInfo eventSynchronizationInfo)
+		public ICommand CreateDeleteEventCommand(IEventDataModel eventDataModel)
 		{
-			return new OneTooCalendarCommand(_ => DeleteEvent(eventSynchronizationInfo));
+			return new OneTooCalendarCommand(_ => DeleteEvent(eventDataModel));
 		}
 
-		private void DeleteEvent(EventSynchronizationInfo eventGridEventViewModel)
+		private void DeleteEvent(IEventDataModel eventDataModel)
 		{
 			App.AssertUIThread();
-			var restoreAction = _calendarViewModel.SetMainViewTemporarily.Invoke(new SynchronizingCalendarViewModel());
-			var cancellationToken = new CancellationTokenSource(TimeSpan.FromSeconds(1000)).Token;
-			var deleteTask = _googleCalendarService.DeleteEventAsync(eventGridEventViewModel, cancellationToken).RunCatchingFailure()
-				.ContinueWith(task => Debug.Assert(task.Result), default(CancellationToken));
-			deleteTask.ContinueWith(
-				_ => _calendarViewModel.CalendarWeekViewModel.TryRefreshEventsAsync(cancellationToken)
-					.ContinueWith(_ => restoreAction.Invoke(), cancellationToken),
-				TaskScheduler.FromCurrentSynchronizationContext()
-				);
+			var restoreAction = _calendarViewModel.SetMainViewTemporarily!.Invoke(new SynchronizingCalendarViewModel());
+			_eventsApi.DeleteEvent(eventDataModel);
+			_calendarViewModel.CalendarWeekViewModel.StartRefreshEventsForWeekFromCache(_eventsApi, restoreAction);
 		}
 
 		public ICommand CreateEditEventCommand(IEventDataModel eventDataModel)
@@ -48,14 +42,18 @@ namespace OneTooCalendar
 		private void EditEvent(IEventDataModel eventDataModel)
 		{
 			var token = new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token;
-			_googleCalendarService.GetCalendarsAsync(token).RunCatchingFailure()
+			_calendarsApi.TryGetCalendarsAsync(token).RunCatchingFailure()
 				.ContinueWith(t => EditEvent(eventDataModel, t.Result), default(CancellationToken));
 		}
 
-		private void EditEvent(IEventDataModel eventDataModel, CalendarDataModel[] googleCalendarInfos)
+		private void EditEvent(IEventDataModel eventDataModel, ICalendarDataModel[]? googleCalendarInfos)
 		{
+			if (googleCalendarInfos is null)
+				// TODO show error
+				return;
+
 			var eventDetailsViewModel = new EventDetailsViewModel(eventDataModel, googleCalendarInfos);
-			var restoreAction = _calendarViewModel.SetMainViewTemporarily.Invoke(eventDetailsViewModel);
+			var restoreAction = _calendarViewModel.SetMainViewTemporarily!.Invoke(eventDetailsViewModel);
 			eventDetailsViewModel.RestoreAction = restoreAction;
 		}
 

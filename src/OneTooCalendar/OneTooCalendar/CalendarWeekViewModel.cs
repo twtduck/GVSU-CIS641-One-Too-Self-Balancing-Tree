@@ -1,26 +1,24 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Windows.Threading;
 
 namespace OneTooCalendar
 {
 	public class CalendarWeekViewModel : ViewModelBase, IDisposable
 	{
-		private readonly GoogleCalendarService _googleCalendarService;
 		public const int DaysInAWeek = 7;
 
 		public CalendarWeekViewModel(
 			DateTime startDate,
-			GoogleCalendarService googleCalendarService,
-			CalendarViewModel calendarViewModel
+			EventCommandFactory eventCommandFactory
 			)
 		{
-			_googleCalendarService = googleCalendarService;
 			for (var i = 0; i < DaysInAWeek; i++)
 			{
-				DateViewModels.Add(new DateViewModel(startDate + TimeSpan.FromDays(i), new EventCommandFactory(_googleCalendarService, calendarViewModel))
+				DateViewModels.Add(new DateViewModel(startDate + TimeSpan.FromDays(i), eventCommandFactory)
 				{
 					BorderOpacity = i == 0 ? 0 : 1
 				});
@@ -31,25 +29,67 @@ namespace OneTooCalendar
 
 		public DateTime StartDate { get; }
 
-		public List<DateViewModel> DateViewModels { get; } = new();
+		public List<DateViewModel> DateViewModels { get; } = new List<DateViewModel>();
 
 		public List<HourLabelViewModel> TimeLabels =>
 			Enumerable.Range(0, 24)
 				.Select(hourNumber => new HourLabelViewModel(hourNumber))
 				.ToList();
 
-		public async Task<bool> TryRefreshEventsAsync(CancellationToken token)
+		public void StartClearCachesAndUpdateEvents(IEventsApi eventsApi, Action afterUpdate)
 		{
 			App.AssertUIThread();
-			var events = await _googleCalendarService.GetEventsForDateRangeAsync(StartDate, StartDate.AddDays(DaysInAWeek), token);
+			var dispatcher = Dispatcher.CurrentDispatcher;
+			eventsApi.ClearCachesAndGetEventsForWeek(
+				StartDate,
+				events => dispatcher.Invoke(
+					() =>
+					{
+						if (events is not null)
+							UpdateFromEventsList(events);
+						else // TODO
+							Debug.Fail($"Unable to get events in {nameof(StartClearCachesAndUpdateEvents)}");
+						afterUpdate();
+					}
+					)
+				);
+		}
+
+		public void StartRefreshEventsForWeekFromCache(IEventsApi eventsApi, Action afterRefresh)
+		{
+			App.AssertUIThread();
+			var dispatcher = Dispatcher.CurrentDispatcher;
+			var token = new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token;
+			eventsApi.TryGetWeekEventsAsync(StartDate, token)
+				.RunCatchingFailure()
+				.ContinueWith(
+					eventsTask =>
+					{
+						dispatcher.Invoke(
+							() =>
+							{
+								if (eventsTask.Result is not null)
+									UpdateFromEventsList(eventsTask.Result);
+								else // TODO
+									Debug.Fail($"Unable to get events in {nameof(StartRefreshEventsForWeekFromCache)}");
+								afterRefresh.Invoke();
+							}
+							);
+					},
+					token
+					);
+		}
+
+		private void UpdateFromEventsList(IList<IEventDataModel>? events)
+		{
+			App.AssertUIThread();
 			if (events is null)
-				return false;
+				return;
 
 			foreach (var dateViewModel in DateViewModels)
 			{
 				dateViewModel.UpdateFromEventsList(events);
 			}
-			return true;
 		}
 
 		public void Dispose()
