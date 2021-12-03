@@ -52,7 +52,12 @@ namespace OneTooCalendar
 				// TODO show error
 				return;
 
-			var eventDetailsViewModel = new EventDetailsViewModel(eventDataModel, googleCalendarInfos);
+			var eventDetailsViewModel = new EventDetailsViewModel(
+				eventDataModel,
+				googleCalendarInfos,
+				_eventsApi,
+				afterRefresh => _calendarViewModel.CalendarWeekViewModel.StartRefreshEventsForWeekFromCache(_eventsApi, afterRefresh)
+				);
 			var restoreAction = _calendarViewModel.SetMainViewTemporarily!.Invoke(eventDetailsViewModel);
 			eventDetailsViewModel.RestoreAction = restoreAction;
 		}

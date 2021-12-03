@@ -21,30 +21,28 @@ namespace OneTooCalendar
 		private List<IEventDataModel> EventsToUpdateOnNextSync { get; } = new List<IEventDataModel>();
 		private Dictionary<DateTime, IList<IEventDataModel>> WeekEventCacheEntries { get; } = new Dictionary<DateTime, IList<IEventDataModel>>();
 
-		public void DeleteEvent(IEventDataModel eventGridEventViewModel)
+		public void DeleteEvent(IEventDataModel eventDataModel)
 		{
-			EventsToDeleteOnNextSync.Add(eventGridEventViewModel);
-			EventsToAddOnNextSync.Remove(eventGridEventViewModel);
-			EventsToUpdateOnNextSync.Remove(eventGridEventViewModel);
+			EventsToDeleteOnNextSync.Add(eventDataModel);
+			EventsToAddOnNextSync.Remove(eventDataModel);
+			EventsToUpdateOnNextSync.Remove(eventDataModel);
 			foreach (var weekEventCacheEntry in WeekEventCacheEntries)
-				weekEventCacheEntry.Value.Remove(eventGridEventViewModel);
+				weekEventCacheEntry.Value.Remove(eventDataModel);
 		}
 
-		public void AddEvent(IEventDataModel eventGridEventViewModel)
+		public void AddEvent(IEventDataModel eventDataModel)
 		{
-			EventsToAddOnNextSync.Add(eventGridEventViewModel);
-			Debug.Assert(!EventsToDeleteOnNextSync.Contains(eventGridEventViewModel));
-			Debug.Assert(!EventsToUpdateOnNextSync.Contains(eventGridEventViewModel));
+			EventsToAddOnNextSync.Add(eventDataModel);
+			Debug.Assert(!EventsToDeleteOnNextSync.Contains(eventDataModel));
+			Debug.Assert(!EventsToUpdateOnNextSync.Contains(eventDataModel));
 			foreach (var weekEventCacheEntry in WeekEventCacheEntries)
-				weekEventCacheEntry.Value.Add(eventGridEventViewModel);
+				weekEventCacheEntry.Value.Add(eventDataModel);
 		}
 
-		public void UpdateEvent(IEventDataModel eventGridEventViewModel)
+		public void UpdateEvent(IEventDataModel eventDataModel)
 		{
-			EventsToUpdateOnNextSync.Add(eventGridEventViewModel);
-			Debug.Assert(!EventsToDeleteOnNextSync.Contains(eventGridEventViewModel));
-			foreach (var weekEventCacheEntry in WeekEventCacheEntries)
-				weekEventCacheEntry.Value.Add(eventGridEventViewModel);
+			EventsToUpdateOnNextSync.Add(eventDataModel);
+			Debug.Assert(!EventsToDeleteOnNextSync.Contains(eventDataModel));
 		}
 
 		public Task<IList<IEventDataModel>?> TryGetWeekEventsAsync(DateTime weekStart, CancellationToken token)

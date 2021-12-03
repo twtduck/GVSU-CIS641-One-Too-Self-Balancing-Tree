@@ -55,7 +55,7 @@ namespace OneTooCalendar
 				);
 		}
 
-		public void StartRefreshEventsForWeekFromCache(IEventsApi eventsApi, Action afterRefresh)
+		public void StartRefreshEventsForWeekFromCache(IEventsApi eventsApi, Action? afterRefresh)
 		{
 			App.AssertUIThread();
 			var dispatcher = Dispatcher.CurrentDispatcher;
@@ -72,7 +72,7 @@ namespace OneTooCalendar
 									UpdateFromEventsList(eventsTask.Result);
 								else // TODO
 									Debug.Fail($"Unable to get events in {nameof(StartRefreshEventsForWeekFromCache)}");
-								afterRefresh.Invoke();
+								afterRefresh?.Invoke();
 							}
 							);
 					},

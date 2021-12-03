@@ -5,15 +5,16 @@ namespace OneTooCalendar
 {
 	public interface IEventDataModel
 	{
-		DateTime StartTime { get; }
-		DateTime EndTime { get; }
-		string Title { get; }
+		DateTime StartTime { get; set; }
+		DateTime EndTime { get; set; }
+		string Title { get; set; }
 		bool AllDayEvent { get; }
 		Color Color { get; }
-		string Location { get; }
-		string Description { get; }
-		int? CustomEventColorId { get; }
+		string Location { get; set; }
+		string Description { get; set; }
+		int? CustomEventColorId { get; set; }
 		ICalendarDataModel Calendar { get; }
-		string EventId { get; }
+		string EventId { get; set; }
+		bool EventIdIsTemporary { get; set; }
 	}
 }

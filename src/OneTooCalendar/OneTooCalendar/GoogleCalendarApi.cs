@@ -220,7 +220,7 @@ namespace OneTooCalendar
 				foreach (var singleEventsItem in singleEvents.Items.Where(x => x is not null))
 				{
 					eventsFound.Add(
-						new GoogleCalendarEventDataModel(calendar, singleEventsItem.Id)
+						new GoogleCalendarEventDataModel(calendar)
 						{
 							AllDayEvent = !singleEventsItem.Start.DateTime.HasValue,
 							StartTime = singleEventsItem.Start.DateTime ??
@@ -236,6 +236,8 @@ namespace OneTooCalendar
 							Description = singleEventsItem.Description,
 							CustomEventColorId = int.TryParse(singleEventsItem.ColorId, out var colorId) ? colorId : default,
 							SourceEvent = singleEventsItem,
+							EventIdIsTemporary = false,
+							EventId = singleEventsItem.Id
 						}
 						);
 				}
@@ -257,6 +259,7 @@ namespace OneTooCalendar
 
 		public async Task<bool> TryUpdateEventAsync(IEventDataModel eventDataModel, CancellationToken token)
 		{
+			Debug.Assert(!eventDataModel.EventIdIsTemporary);
 			var service = _googleCalendarService;
 			if (service is null)
 			{
@@ -284,8 +287,9 @@ namespace OneTooCalendar
 			}
 		}
 
-		public async Task<bool> TryDeleteEventAsync(IEventDataModel eventToDelete, CancellationToken token)
+		public async Task<bool> TryDeleteEventAsync(IEventDataModel eventDataModel, CancellationToken token)
 		{
+			Debug.Assert(!eventDataModel.EventIdIsTemporary);
 			Debug.Assert(_googleCalendarService is not null);
 			var service = _googleCalendarService;
 			if (service is null)
@@ -293,7 +297,7 @@ namespace OneTooCalendar
 
 			try
 			{
-				var request = service.Events.Delete(eventToDelete.Calendar.Id, eventToDelete.EventId);
+				var request = service.Events.Delete(eventDataModel.Calendar.Id, eventDataModel.EventId);
 				await request.ExecuteAsync(token);
 				return true;
 			}
@@ -313,6 +317,7 @@ namespace OneTooCalendar
 
 			try
 			{
+				Debug.Assert(eventDataModel.EventIdIsTemporary);
 				var request = service.Events.Insert(
 					new Event
 					{
@@ -331,7 +336,8 @@ namespace OneTooCalendar
 					},
 					eventDataModel.Calendar.Id
 					);
-				await request.ExecuteAsync(token);
+				eventDataModel.EventId = (await request.ExecuteAsync(token)).Id;
+				eventDataModel.EventIdIsTemporary = false;
 				return true;
 			}
 			catch (Exception)

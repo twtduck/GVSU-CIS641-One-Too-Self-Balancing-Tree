@@ -10,10 +10,21 @@ namespace OneTooCalendar
 	public class EventDetailsViewModel : ViewModelBase
 	{
 		private readonly IEventDataModel _eventDataModel;
+		private readonly ICalendarDataModel[] _googleCalendarInfos;
+		private readonly IEventsApi _eventsApi;
+		private readonly Action<Action?> _refreshCurrentCalendarAndThenRunAction;
 
-		public EventDetailsViewModel(IEventDataModel eventDataModel, ICalendarDataModel[] googleCalendarInfos)
+		public EventDetailsViewModel(
+			IEventDataModel eventDataModel,
+			ICalendarDataModel[] googleCalendarInfos,
+			IEventsApi eventsApi,
+			Action<Action?> refreshCurrentCalendarAndThenRunAction
+			)
 		{
 			_eventDataModel = eventDataModel;
+			_googleCalendarInfos = googleCalendarInfos;
+			_eventsApi = eventsApi;
+			_refreshCurrentCalendarAndThenRunAction = refreshCurrentCalendarAndThenRunAction;
 			CloseCommand = new OneTooCalendarCommand(_ => Close());
 			SaveCommand = new OneTooCalendarCommand(_ => Save());
 			CancelCommand = new OneTooCalendarCommand(_ => Cancel());
@@ -65,12 +76,13 @@ namespace OneTooCalendar
 			return "Missing color name";
 		}
 
+		private DateTime StartDateTime => StartDate.Date + StartTime.TimeOfDay;
+		private DateTime EndDateTime => EndDate.Date + EndTime.TimeOfDay;
+
 		public bool HasEdits =>
 			Title != _eventDataModel.Title ||
-			StartDate != _eventDataModel.StartTime ||
-			StartTime != _eventDataModel.StartTime ||
-			EndDate != _eventDataModel.EndTime ||
-			EndTime != _eventDataModel.EndTime ||
+			StartDateTime != _eventDataModel.StartTime ||
+			EndDateTime != _eventDataModel.EndTime ||
 			Location != _eventDataModel.Location ||
 			Description != _eventDataModel.Description ||
 			SelectedColor.CustomEventColorId != _eventDataModel.CustomEventColorId ||
@@ -129,7 +141,33 @@ namespace OneTooCalendar
 		public void Save()
 		{
 			Debug.Assert(RestoreAction is not null);
-			RestoreAction?.Invoke();
+			if (HasEdits)
+			{
+				_eventDataModel.Title = Title;
+				_eventDataModel.StartTime = StartDateTime;
+				_eventDataModel.EndTime = EndDateTime;
+				_eventDataModel.Location = Location;
+				_eventDataModel.Description = Description;
+				_eventDataModel.CustomEventColorId = SelectedColor.CustomEventColorId;
+				_eventsApi.UpdateEvent(_eventDataModel);
+			}
+			if (_eventDataModel.Calendar.Name != SelectedCalendarName)
+			{
+				var newCalendarDataModel = _googleCalendarInfos.First(x => x.Name == SelectedCalendarName);
+				var newEvent = new GoogleCalendarEventDataModel(newCalendarDataModel)
+				{
+					Title = _eventDataModel.Title,
+					StartTime = _eventDataModel.StartTime,
+					EndTime = _eventDataModel.EndTime,
+					Location = _eventDataModel.Location,
+					Description = _eventDataModel.Description,
+					CustomEventColorId = _eventDataModel.CustomEventColorId
+				};
+				_eventsApi.AddEvent(newEvent);
+				_eventsApi.DeleteEvent(_eventDataModel);
+			}
+
+			_refreshCurrentCalendarAndThenRunAction(RestoreAction);
 		}
 	}
 }
