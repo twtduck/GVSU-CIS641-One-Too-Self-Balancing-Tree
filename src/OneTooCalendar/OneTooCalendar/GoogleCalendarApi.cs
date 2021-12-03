@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
+using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
 using Google.Apis.Util.Store;
 using Colors = Google.Apis.Calendar.v3.Data.Colors;
@@ -61,7 +63,7 @@ namespace OneTooCalendar
 				await using var stream = new FileStream("ApiKeys/credentials.json", FileMode.Open, FileAccess.Read);
 				// The file token.json stores the user's access and refresh tokens, and is created
 				// automatically when the authorization flow completes for the first time.
-				string credPath = "token.json";
+				const string credPath = "token.json";
 				credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
 					(await GoogleClientSecrets.FromStreamAsync(stream, token)).Secrets,
 					new[] { CalendarService.Scope.Calendar },
@@ -77,18 +79,20 @@ namespace OneTooCalendar
 			}
 
 			// Create Google Calendar API service.
-			var service = new CalendarService(new BaseClientService.Initializer
-			{
-				HttpClientInitializer = credential,
-				ApplicationName = "OneTooCalendar",
-			});
+			var service = new CalendarService(
+				new BaseClientService.Initializer
+				{
+					HttpClientInitializer = credential,
+					ApplicationName = "OneTooCalendar",
+				}
+				);
 
 			_googleCalendarService = service;
 
 			return service;
 		}
 
-		public async Task<Colors?> GetCalendarColors(CancellationToken token)
+		private async Task<Colors?> GetCalendarColors(CancellationToken token)
 		{
 			var service = _googleCalendarService;
 			if (service is null)
@@ -105,6 +109,7 @@ namespace OneTooCalendar
 			}
 		}
 
+		[SuppressMessage("ReSharper", "CognitiveComplexity")]
 		private async Task UpdateColorDictionaries(CancellationToken token)
 		{
 			try
@@ -188,7 +193,7 @@ namespace OneTooCalendar
 						.Select(x => x.Id)
 						.Select(service.Calendars.Get)
 						.Select(x => x.ExecuteAsync(token))
-					).Result.Select(x => new CalendarDataModel(x, calList.Items.Single(y => y.Id == x.Id))).ToArray();
+					).Result.Select(x => new GoogleCalendarCalendarDataModel(x, calList.Items.Single(y => y.Id == x.Id))).ToArray();
 			}
 			catch (Exception)
 			{
@@ -212,24 +217,27 @@ namespace OneTooCalendar
 				eventsListRequest.SingleEvents = true;
 				var singleEvents = await eventsListRequest.ExecuteAsync(token);
 				var eventsFound = new List<IEventDataModel>();
-				foreach (var singleEventsItem in singleEvents.Items)
+				foreach (var singleEventsItem in singleEvents.Items.Where(x => x is not null))
 				{
-					eventsFound.Add(new CalendarEvent(calendar, singleEventsItem.Id)
-					{
-						AllDayEvent = !singleEventsItem.Start.DateTime.HasValue,
-						StartTime = singleEventsItem.Start.DateTime ??
-							(DateTime.TryParse(singleEventsItem.Start.Date, out var startDateParsed)
-								? startDateParsed
-								: ErrorGettingDate()),
-						EndTime = singleEventsItem.End.DateTime ??
-							(DateTime.TryParse(singleEventsItem.Start.Date, out var endDateParsed)
-								? endDateParsed
-								: ErrorGettingDate()),
-						Title = singleEventsItem.Summary,
-						Location = singleEventsItem.Location,
-						Description = singleEventsItem.Description,
-						CustomEventColorId = int.TryParse(singleEventsItem.ColorId, out var colorId) ? colorId : default,
-					});
+					eventsFound.Add(
+						new GoogleCalendarEventDataModel(calendar, singleEventsItem.Id)
+						{
+							AllDayEvent = !singleEventsItem.Start.DateTime.HasValue,
+							StartTime = singleEventsItem.Start.DateTime ??
+								(DateTime.TryParse(singleEventsItem.Start.Date, out var startDateParsed)
+									? startDateParsed
+									: ErrorGettingDate()),
+							EndTime = singleEventsItem.End.DateTime ??
+								(DateTime.TryParse(singleEventsItem.Start.Date, out var endDateParsed)
+									? endDateParsed
+									: ErrorGettingDate()),
+							Title = singleEventsItem.Summary,
+							Location = singleEventsItem.Location,
+							Description = singleEventsItem.Description,
+							CustomEventColorId = int.TryParse(singleEventsItem.ColorId, out var colorId) ? colorId : default,
+							SourceEvent = singleEventsItem,
+						}
+						);
 				}
 
 				return eventsFound;
@@ -247,7 +255,36 @@ namespace OneTooCalendar
 			}
 		}
 
-		public async Task<bool> DeleteEventAsync(EventSynchronizationInfo eventToDelete, CancellationToken token)
+		public async Task<bool> TryUpdateEventAsync(IEventDataModel eventDataModel, CancellationToken token)
+		{
+			var service = _googleCalendarService;
+			if (service is null)
+			{
+				Debug.Fail("");
+				return false;
+			}
+
+			try
+			{
+				var sourceEvent = ((GoogleCalendarEventDataModel)eventDataModel).SourceEvent;
+				sourceEvent.Summary = eventDataModel.Title;
+				sourceEvent.Location = eventDataModel.Location;
+				sourceEvent.Description = eventDataModel.Description;
+				sourceEvent.Start.DateTime = eventDataModel.StartTime;
+				sourceEvent.End.DateTime = eventDataModel.EndTime;
+				sourceEvent.ColorId = eventDataModel.CustomEventColorId?.ToString();
+				var request = service.Events.Update(sourceEvent, eventDataModel.Calendar.Id, eventDataModel.EventId);
+				await request.ExecuteAsync(token);
+				return true;
+			}
+			catch (Exception)
+			{
+				Debug.Fail("");
+				return false;
+			}
+		}
+
+		public async Task<bool> TryDeleteEventAsync(IEventDataModel eventToDelete, CancellationToken token)
 		{
 			Debug.Assert(_googleCalendarService is not null);
 			var service = _googleCalendarService;
@@ -256,7 +293,44 @@ namespace OneTooCalendar
 
 			try
 			{
-				var request = service.Events.Delete(eventToDelete.CalendarId, eventToDelete.EventId);
+				var request = service.Events.Delete(eventToDelete.Calendar.Id, eventToDelete.EventId);
+				await request.ExecuteAsync(token);
+				return true;
+			}
+			catch (Exception)
+			{
+				Debug.Fail("");
+				return false;
+			}
+		}
+
+		public async Task<bool> TryAddEventAsync(IEventDataModel eventDataModel, CancellationToken token)
+		{
+			Debug.Assert(_googleCalendarService is not null);
+			var service = _googleCalendarService;
+			if (service is null)
+				return false;
+
+			try
+			{
+				var request = service.Events.Insert(
+					new Event
+					{
+						Summary = eventDataModel.Title,
+						Location = eventDataModel.Location,
+						Description = eventDataModel.Description,
+						Start = new EventDateTime
+						{
+							DateTime = eventDataModel.StartTime,
+						},
+						End = new EventDateTime
+						{
+							DateTime = eventDataModel.EndTime,
+						},
+						ColorId = eventDataModel.CustomEventColorId?.ToString(),
+					},
+					eventDataModel.Calendar.Id
+					);
 				await request.ExecuteAsync(token);
 				return true;
 			}

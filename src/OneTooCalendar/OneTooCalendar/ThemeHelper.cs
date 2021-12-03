@@ -33,10 +33,10 @@ namespace OneTooCalendar
 		public static Dictionary<int, Color>? CalendarForegroundColorMap { get; set; }
 		public static Dictionary<int, Color>? EventForegroundColorMap { get; set; }
 
-		private static List<string> _calendars = new List<string>();
+		private static readonly List<string> _calendars = new List<string>();
 
-		public static Color? TryGetEventBackgroundColor(int eventColorId) =>
-			EventBackgroundColorMap?.TryGetValue(eventColorId, out var color) == true ? color : default(Color?);
+		public static Color? TryGetEventBackgroundColor(int? eventColorId) =>
+			eventColorId.HasValue && EventBackgroundColorMap?.TryGetValue(eventColorId.Value, out var color) == true ? color : default(Color?);
 		public static Color? TryGetEventForegroundColor(int eventColorId) =>
 			EventForegroundColorMap?.TryGetValue(eventColorId, out var color) == true ? color : default(Color?);
 

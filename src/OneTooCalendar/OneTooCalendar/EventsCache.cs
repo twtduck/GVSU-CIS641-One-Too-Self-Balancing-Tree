@@ -17,14 +17,34 @@ namespace OneTooCalendar
 		}
 		private readonly GoogleCalendarApi _googleCalendarApi;
 		private List<IEventDataModel> EventsToDeleteOnNextSync { get; } = new List<IEventDataModel>();
+		private List<IEventDataModel> EventsToAddOnNextSync { get; } = new List<IEventDataModel>();
+		private List<IEventDataModel> EventsToUpdateOnNextSync { get; } = new List<IEventDataModel>();
 		private Dictionary<DateTime, IList<IEventDataModel>> WeekEventCacheEntries { get; } = new Dictionary<DateTime, IList<IEventDataModel>>();
 
 		public void DeleteEvent(IEventDataModel eventGridEventViewModel)
 		{
-
 			EventsToDeleteOnNextSync.Add(eventGridEventViewModel);
+			EventsToAddOnNextSync.Remove(eventGridEventViewModel);
+			EventsToUpdateOnNextSync.Remove(eventGridEventViewModel);
 			foreach (var weekEventCacheEntry in WeekEventCacheEntries)
 				weekEventCacheEntry.Value.Remove(eventGridEventViewModel);
+		}
+
+		public void AddEvent(IEventDataModel eventGridEventViewModel)
+		{
+			EventsToAddOnNextSync.Add(eventGridEventViewModel);
+			Debug.Assert(!EventsToDeleteOnNextSync.Contains(eventGridEventViewModel));
+			Debug.Assert(!EventsToUpdateOnNextSync.Contains(eventGridEventViewModel));
+			foreach (var weekEventCacheEntry in WeekEventCacheEntries)
+				weekEventCacheEntry.Value.Add(eventGridEventViewModel);
+		}
+
+		public void UpdateEvent(IEventDataModel eventGridEventViewModel)
+		{
+			EventsToUpdateOnNextSync.Add(eventGridEventViewModel);
+			Debug.Assert(!EventsToDeleteOnNextSync.Contains(eventGridEventViewModel));
+			foreach (var weekEventCacheEntry in WeekEventCacheEntries)
+				weekEventCacheEntry.Value.Add(eventGridEventViewModel);
 		}
 
 		public Task<IList<IEventDataModel>?> TryGetWeekEventsAsync(DateTime weekStart, CancellationToken token)
@@ -62,10 +82,18 @@ namespace OneTooCalendar
 			if (!await CheckForInternetConnectionAsync(8000, url: "http://www.google.com"))
 				return false;
 
-			if ((await Task.WhenAll(EventsToDeleteOnNextSync.Select(x => _googleCalendarApi.DeleteEventAsync(x.SyncInfo, token)))).Any(x => !x))
+			if ((await Task.WhenAll(EventsToDeleteOnNextSync.Select(x => _googleCalendarApi.TryDeleteEventAsync(x, token)))).Any(x => !x))
+				return false;
+
+			if ((await Task.WhenAll(EventsToAddOnNextSync.Select(x => _googleCalendarApi.TryAddEventAsync(x, token)))).Any(x => !x))
+				return false;
+
+			if ((await Task.WhenAll(EventsToUpdateOnNextSync.Select(x => _googleCalendarApi.TryUpdateEventAsync(x, token)))).Any(x => !x))
 				return false;
 
 			EventsToDeleteOnNextSync.Clear();
+			EventsToAddOnNextSync.Clear();
+			EventsToUpdateOnNextSync.Clear();
 			WeekEventCacheEntries.Clear();
 			return true;
 		}

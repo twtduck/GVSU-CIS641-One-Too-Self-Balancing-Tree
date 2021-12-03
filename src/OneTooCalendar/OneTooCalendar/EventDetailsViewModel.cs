@@ -2,17 +2,22 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Windows;
 using System.Windows.Input;
 
 namespace OneTooCalendar
 {
 	public class EventDetailsViewModel : ViewModelBase
 	{
+		private readonly IEventDataModel _eventDataModel;
+
 		public EventDetailsViewModel(IEventDataModel eventDataModel, ICalendarDataModel[] googleCalendarInfos)
 		{
+			_eventDataModel = eventDataModel;
 			CloseCommand = new OneTooCalendarCommand(_ => Close());
 			SaveCommand = new OneTooCalendarCommand(_ => Save());
 			CancelCommand = new OneTooCalendarCommand(_ => Cancel());
+
 			Title = eventDataModel.Title;
 			StartDate = eventDataModel.StartTime;
 			StartTime = eventDataModel.StartTime;
@@ -25,9 +30,9 @@ namespace OneTooCalendar
 				CalendarNames.Add(googleCalendarInfo.Name);
 			}
 
-			var calendarDataModel = googleCalendarInfos.First(x => x.Id == eventDataModel.SyncInfo.CalendarId);
+			var calendarDataModel = googleCalendarInfos.First(x => x.Id == eventDataModel.Calendar.Id);
 			SelectedCalendarName = calendarDataModel.Name;
-			Colors.Add(new ColorViewModel(ThemeHelper.GetCalendarBackgroundColor(calendarDataModel), "Calendar default"));
+			Colors.Add(new ColorViewModel(ThemeHelper.GetCalendarBackgroundColor(calendarDataModel), "Calendar default", default));
 			if (ThemeHelper.EventBackgroundColorMap is not null)
 			{
 				foreach (var color in ThemeHelper.EventBackgroundColorMap)
@@ -37,7 +42,8 @@ namespace OneTooCalendar
 							color.Value,
 							ThemeHelper.EventBackgroundColorNames.TryGetValue(color.Key, out var colorName)
 								? colorName
-								: HandleMissingColorName()
+								: HandleMissingColorName(),
+							color.Key
 							)
 						);
 				}
@@ -58,6 +64,17 @@ namespace OneTooCalendar
 			Debug.Fail("Missing color name");
 			return "Missing color name";
 		}
+
+		public bool HasEdits =>
+			Title != _eventDataModel.Title ||
+			StartDate != _eventDataModel.StartTime ||
+			StartTime != _eventDataModel.StartTime ||
+			EndDate != _eventDataModel.EndTime ||
+			EndTime != _eventDataModel.EndTime ||
+			Location != _eventDataModel.Location ||
+			Description != _eventDataModel.Description ||
+			SelectedColor.CustomEventColorId != _eventDataModel.CustomEventColorId ||
+			SelectedCalendarName != _eventDataModel.Calendar.Name; // TODO: This is not the best way to compare calendars
 
 		public string SelectedCalendarName { get; set; }
 
@@ -92,6 +109,14 @@ namespace OneTooCalendar
 		public void Close()
 		{
 			Debug.Assert(RestoreAction is not null);
+			if (HasEdits)
+			{
+				var result = MessageBox.Show("Save changes?", "OneTooCalendar", MessageBoxButton.YesNoCancel);
+				if (result == MessageBoxResult.Yes)
+					Save();
+				else if (result == MessageBoxResult.Cancel)
+					return;
+			}
 			RestoreAction?.Invoke();
 		}
 

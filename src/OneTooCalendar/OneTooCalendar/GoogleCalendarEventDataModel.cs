@@ -1,18 +1,18 @@
 using System;
 using System.Windows.Media;
+using Google.Apis.Calendar.v3.Data;
 
 namespace OneTooCalendar
 {
-	public class CalendarEvent : IEventDataModel
+	public class GoogleCalendarEventDataModel : IEventDataModel
 	{
-		private readonly ICalendarDataModel _sourceCalendar;
 		private readonly Color _calendarBackgroundColor;
 
-		public CalendarEvent(ICalendarDataModel sourceCalendar, string eventId)
+		public GoogleCalendarEventDataModel(ICalendarDataModel sourceCalendar, string eventId)
 		{
-			_sourceCalendar = sourceCalendar;
+			Calendar = sourceCalendar;
+			EventId = eventId;
 			_calendarBackgroundColor = ThemeHelper.GetCalendarBackgroundColor(sourceCalendar);
-			SyncInfo = new EventSynchronizationInfo(sourceCalendar.Id, eventId);
 		}
 
 		public bool AllDayEvent { get; init; }
@@ -21,8 +21,10 @@ namespace OneTooCalendar
 		public string Title { get; init; } = "";
 		public string Location { get; init; } = "";
 		public string Description { get; init; } = "";
-		public Color Color => ThemeHelper.TryGetEventBackgroundColor(CustomEventColorId ?? _sourceCalendar.ColorId) ?? _calendarBackgroundColor;
-		public EventSynchronizationInfo SyncInfo { get; }
+		public Color Color => ThemeHelper.TryGetEventBackgroundColor(CustomEventColorId) ?? ThemeHelper.GetCalendarBackgroundColor(Calendar);
+		public ICalendarDataModel Calendar { get; }
+		public string EventId { get; }
 		public int? CustomEventColorId { get; init; }
+		public Event SourceEvent { get; init; } = null!;
 	}
 }

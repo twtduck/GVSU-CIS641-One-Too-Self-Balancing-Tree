@@ -10,9 +10,10 @@ namespace OneTooCalendar
 		string Title { get; }
 		bool AllDayEvent { get; }
 		Color Color { get; }
-		EventSynchronizationInfo SyncInfo { get; }
 		string Location { get; }
 		string Description { get; }
 		int? CustomEventColorId { get; }
+		ICalendarDataModel Calendar { get; }
+		string EventId { get; }
 	}
 }

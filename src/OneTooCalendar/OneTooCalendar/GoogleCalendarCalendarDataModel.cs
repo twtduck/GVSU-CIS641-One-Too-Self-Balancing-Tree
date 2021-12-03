@@ -2,12 +2,12 @@
 
 namespace OneTooCalendar
 {
-	public class CalendarDataModel : ICalendarDataModel
+	public class GoogleCalendarCalendarDataModel : ICalendarDataModel
 	{
 		private readonly CalendarListEntry _calendarListEntry;
 		private readonly Calendar _googleCalendar;
 
-		public CalendarDataModel(Calendar calendar, CalendarListEntry calendarListEntry)
+		public GoogleCalendarCalendarDataModel(Calendar calendar, CalendarListEntry calendarListEntry)
 		{
 			_calendarListEntry = calendarListEntry;
 			_googleCalendar = calendar;
@@ -18,12 +18,5 @@ namespace OneTooCalendar
 		public string Id => _googleCalendar.Id;
 		public int ColorId { get; }
 		public bool IsPrimary => _calendarListEntry.Primary == true;
-	}
-
-	public interface ICalendarDataModel
-	{
-		string Name { get; }
-		string Id { get; }
-		public int ColorId { get; }
 	}
 }
