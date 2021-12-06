@@ -3,6 +3,8 @@ using System.Globalization;
 
 namespace OneTooCalendar
 {
+	public delegate void ApplyEditsAndRefresh(IEventDataModel eventDataModel);
+	
 	public class CalendarViewModel : ViewModelBase, IDisposable
 	{
 		private readonly IEventsApi _eventsApi;
@@ -14,9 +16,17 @@ namespace OneTooCalendar
 		{
 			_eventsApi = eventsApi;
 			var eventCommandFactory = new EventCommandFactory(eventsApi, calendarsApi, this);
+			var applyEditsAndRefresh = new ApplyEditsAndRefresh(
+				eventDataModel =>
+				{
+					_eventsApi.UpdateEvent(eventDataModel);
+					_calendarWeekViewModel!.StartRefreshEventsForWeekFromCache(_eventsApi, () => { });
+				}
+				);
 			_calendarWeekViewModel = new CalendarWeekViewModel(
 				GetFirstDayOfCurrentWeek(),
-				eventCommandFactory
+				eventCommandFactory,
+				applyEditsAndRefresh
 				);
 			UpdateCurrentMonthAndYear();
 			_backlogViewModel = new BacklogViewModel();
@@ -24,22 +34,26 @@ namespace OneTooCalendar
 				_ => CalendarWeekViewModel =
 					new CalendarWeekViewModel(
 						CalendarWeekViewModel.StartDate.AddDays(-CalendarWeekViewModel.DaysInAWeek),
-						eventCommandFactory
+						eventCommandFactory,
+						applyEditsAndRefresh
 						)
 				);
 			NextWeekButtonCommand = new OneTooCalendarCommand(
 				_ => CalendarWeekViewModel =
 					new CalendarWeekViewModel(
 						CalendarWeekViewModel.StartDate.AddDays(CalendarWeekViewModel.DaysInAWeek),
-						eventCommandFactory
+						eventCommandFactory,
+						applyEditsAndRefresh
 						)
 				);
 			TodayButtonCommand = new OneTooCalendarCommand(
-				_ => CalendarWeekViewModel = new CalendarWeekViewModel(GetFirstDayOfCurrentWeek(), eventCommandFactory)
+				_ => CalendarWeekViewModel = new CalendarWeekViewModel(GetFirstDayOfCurrentWeek(), eventCommandFactory, applyEditsAndRefresh)
 				);
 			RefreshButtonCommand = new OneTooCalendarCommand(_ =>
 					OnRefreshButtonClicked()
 				);
+
+			DragDropHelper.InitializeCalendar(this);
 
 			DateTime GetFirstDayOfCurrentWeek()
 			{

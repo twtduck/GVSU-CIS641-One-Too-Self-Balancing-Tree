@@ -7,6 +7,7 @@ namespace OneTooCalendar
 	{
 		private readonly DateTime _time;
 		private readonly bool _separatorIsVisible;
+		public const int QuarterHourPeriodHeight = 12;
 
 		public QuarterHourPeriodViewModel(DateTime time, bool separatorIsVisible)
 		{

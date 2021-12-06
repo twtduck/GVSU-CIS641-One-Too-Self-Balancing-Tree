@@ -13,12 +13,13 @@ namespace OneTooCalendar
 
 		public CalendarWeekViewModel(
 			DateTime startDate,
-			EventCommandFactory eventCommandFactory
+			EventCommandFactory eventCommandFactory,
+			ApplyEditsAndRefresh applyEditsAndRefresh
 			)
 		{
 			for (var i = 0; i < DaysInAWeek; i++)
 			{
-				DateViewModels.Add(new DateViewModel(startDate + TimeSpan.FromDays(i), eventCommandFactory)
+				DateViewModels.Add(new DateViewModel(startDate + TimeSpan.FromDays(i), eventCommandFactory, applyEditsAndRefresh)
 				{
 					BorderOpacity = i == 0 ? 0 : 1
 				});

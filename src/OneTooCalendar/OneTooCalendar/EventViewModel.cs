@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -7,39 +8,26 @@ namespace OneTooCalendar
 	public class EventGridEventViewModel : Border, IDisposable
 	{
 		public IEventDataModel EventDataModel { get; }
-		private bool _dragging;
 
 		public EventGridEventViewModel(EventCommandFactory eventCommandFactory, IEventDataModel eventDataModel)
 		{
 			EventDataModel = eventDataModel;
-			MouseMove += OnMouseMove;
-			MouseLeftButtonDown += OnLeftButtonDown;
-			MouseLeftButtonUp += OnLeftButtonUp;
+			MouseLeftButtonDown += OnMouseLeftButtonDown;
 			ContextMenu = new ContextMenu();
 			ContextMenu.Items.Add(new MenuItem { Header = EventCommandFactory.CreateDeleteEventControlContent(), Command = eventCommandFactory.CreateDeleteEventCommand(EventDataModel) });
 			ContextMenu.Items.Add(new MenuItem { Header = EventCommandFactory.CreateEditEventControlContent(), Command = eventCommandFactory.CreateEditEventCommand(EventDataModel) });
 		}
 
-		private void OnLeftButtonDown(object sender, MouseButtonEventArgs e)
+		private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
-			_dragging = true;
-		}
-
-		private void OnLeftButtonUp(object sender, MouseButtonEventArgs e)
-		{
-			_dragging = false;
-		}
-
-		private void OnMouseMove(object sender, MouseEventArgs e)
-		{
-
+			// var startBlock = (int)GetValue(Grid.RowProperty);
+			DragDrop.DoDragDrop(this, this, DragDropEffects.Move);
+			// DragDropHelper.OnEventGridEventMouseDown(this, startBlock, e);
 		}
 
 		public void Dispose()
 		{
-			MouseMove -= OnMouseMove;
-			MouseLeftButtonDown -= OnLeftButtonDown;
-			MouseLeftButtonUp -= OnLeftButtonUp;
+			MouseLeftButtonDown -= OnMouseLeftButtonDown;
 		}
 	}
 }

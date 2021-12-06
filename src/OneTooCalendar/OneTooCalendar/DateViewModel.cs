@@ -13,15 +13,19 @@ namespace OneTooCalendar
 {
 	public class DateViewModel : ViewModelBase, IDisposable
 	{
+		public const int GridBlockHeight = 12;
 		private readonly DateTime _dateTime;
 		private readonly EventCommandFactory _eventCommandFactory;
+		private readonly ApplyEditsAndRefresh _applyEditsAndRefresh;
+		private readonly IEventsApi _eventsApi;
 
 		private readonly List<EventGridEventViewModel> _individualEvents = new List<EventGridEventViewModel>();
 
-		public DateViewModel(DateTime dateTime, EventCommandFactory eventCommandFactory)
+		public DateViewModel(DateTime dateTime, EventCommandFactory eventCommandFactory, ApplyEditsAndRefresh applyEditsAndRefresh)
 		{
 			_dateTime = dateTime;
 			_eventCommandFactory = eventCommandFactory;
+			_applyEditsAndRefresh = applyEditsAndRefresh;
 
 			EventGridList = new ObservableCollection<Grid>();
 		}
@@ -30,14 +34,14 @@ namespace OneTooCalendar
 			IList<IEventDataModel> eventDataModels,
 			DateTime dateMidnight,
 			List<EventGridEventViewModel> individualEvents,
-			EventCommandFactory eventCommandFactory
+			EventCommandFactory eventCommandFactory,
+			ApplyEditsAndRefresh applyEditsAndRefresh
 			)
 		{
-			const int blockSize = 12;
 			var eventGrid = new Grid();
 			for (int i = 0; i < 24 * 4; i++)
 			{
-				eventGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(blockSize) });
+				eventGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(GridBlockHeight) });
 			}
 
 			var eventDataModelsForToday = eventDataModels
@@ -50,6 +54,9 @@ namespace OneTooCalendar
 				eventGrid.ColumnDefinitions.Add(new ColumnDefinition());
 			}
 
+			columnsNeeded++; // Add column for more space on the right to drop events
+			eventGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8, GridUnitType.Pixel) });
+
 			for (int i = 0; i < 24 * 4; i++)
 			{
 				if (i % 4 == 0)
@@ -58,7 +65,7 @@ namespace OneTooCalendar
 					dividerGrid.SetValue(Grid.RowProperty, i);
 					dividerGrid.SetValue(Grid.ColumnSpanProperty, columnsNeeded);
 					dividerGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1) });
-					dividerGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(blockSize - 1) });
+					dividerGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(GridBlockHeight - 1) });
 					var border = new Border
 					{
 						BorderBrush = ThemeHelper.CalendarDivider,
@@ -67,6 +74,68 @@ namespace OneTooCalendar
 					border.SetValue(Grid.RowProperty, 0);
 					dividerGrid.Children.Add(border);
 					eventGrid.Children.Add(dividerGrid);
+					dividerGrid.AllowDrop = true;
+					dividerGrid.DragOver += (sender, args) =>
+					{
+						if (args.Data.GetDataPresent(typeof(EventGridEventViewModel)))
+						{
+							dividerGrid.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFE0E0E0"));
+						}
+					};
+					dividerGrid.DragLeave += (sender, args) =>
+					{
+						dividerGrid.Background = new SolidColorBrush(Colors.White);
+					};
+					var blockIndex = i;
+					dividerGrid.Drop += (sender, args) =>
+					{
+						dividerGrid.Background = new SolidColorBrush(Colors.White);
+						var eventViewModel = (EventGridEventViewModel)args.Data.GetData(typeof(EventGridEventViewModel))!;
+						var eventDataModel = eventViewModel.EventDataModel;
+						var duration = eventDataModel.EndTime - eventDataModel.StartTime;
+						var newStartTime = dateMidnight.AddHours(blockIndex / 4).AddMinutes(blockIndex % 4 * 15);
+						var newEndTime = newStartTime.Add(duration);
+						eventDataModel.StartTime = newStartTime;
+						eventDataModel.EndTime = newEndTime;
+						applyEditsAndRefresh.Invoke(eventDataModel);
+					};
+					dividerGrid.Background = new SolidColorBrush(Colors.White);
+				}
+				else
+				{
+					var nonDividerGrid = new Grid()
+					{
+						Height = DateViewModel.GridBlockHeight
+					};
+					nonDividerGrid.SetValue(Grid.RowProperty, i);
+					nonDividerGrid.SetValue(Grid.ColumnSpanProperty, columnsNeeded);
+					eventGrid.Children.Add(nonDividerGrid);
+					nonDividerGrid.AllowDrop = true;
+					nonDividerGrid.DragOver += (sender, args) =>
+					{
+						if (args.Data.GetDataPresent(typeof(EventGridEventViewModel)))
+						{
+							nonDividerGrid.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFE0E0E0"));
+						}
+					};
+					nonDividerGrid.DragLeave += (sender, args) =>
+					{
+						nonDividerGrid.Background = new SolidColorBrush(Colors.White);
+					};
+					var blockIndex = i;
+					nonDividerGrid.Drop += (sender, args) =>
+					{
+						nonDividerGrid.Background = new SolidColorBrush(Colors.White);
+						var eventViewModel = (EventGridEventViewModel)args.Data.GetData(typeof(EventGridEventViewModel))!;
+						var eventDataModel = eventViewModel.EventDataModel;
+						var duration = eventDataModel.EndTime - eventDataModel.StartTime;
+						var newStartTime = dateMidnight.AddHours(blockIndex / 4).AddMinutes(blockIndex % 4 * 15);
+						var newEndTime = newStartTime.Add(duration);
+						eventDataModel.StartTime = newStartTime;
+						eventDataModel.EndTime = newEndTime;
+						applyEditsAndRefresh.Invoke(eventDataModel);
+					};
+					nonDividerGrid.Background = new SolidColorBrush(Colors.White);
 				}
 			}
 
@@ -105,7 +174,7 @@ namespace OneTooCalendar
 			{
 				var block = GetBlockIndexFromTime(DateTime.Now, dateMidnight);
 				var percentThroughBlock = DateTime.Now.Minute % 15 / 15.0;
-				var pixelOffset = (int)(percentThroughBlock * blockSize);
+				var pixelOffset = (int)(percentThroughBlock * GridBlockHeight);
 				var lineGrid = new Grid();
 				lineGrid.SetValue(Grid.RowProperty, block);
 				lineGrid.SetValue(Grid.ColumnSpanProperty, columnsNeeded);
@@ -251,7 +320,7 @@ namespace OneTooCalendar
 				individualEvent.Dispose();
 			}
 			_individualEvents.Clear();
-			EventGridList.Add(BuildEventGrid(events, _dateTime, _individualEvents, _eventCommandFactory));
+			EventGridList.Add(BuildEventGrid(events, _dateTime, _individualEvents, _eventCommandFactory, _applyEditsAndRefresh));
 		}
 
 		public void Dispose()
