@@ -72,6 +72,8 @@ namespace OneTooCalendar
 						BorderThickness = new Thickness(0, 1, 0, 0)
 					};
 					border.SetValue(Grid.RowProperty, 0);
+					dividerGrid.VerticalAlignment = VerticalAlignment.Stretch;
+					dividerGrid.HorizontalAlignment = HorizontalAlignment.Stretch;
 					dividerGrid.Children.Add(border);
 					eventGrid.Children.Add(dividerGrid);
 					dividerGrid.AllowDrop = true;
@@ -84,12 +86,12 @@ namespace OneTooCalendar
 					};
 					dividerGrid.DragLeave += (sender, args) =>
 					{
-						dividerGrid.Background = new SolidColorBrush(Colors.White);
+						dividerGrid.Background = new SolidColorBrush(Colors.Transparent);
 					};
 					var blockIndex = i;
 					dividerGrid.Drop += (sender, args) =>
 					{
-						dividerGrid.Background = new SolidColorBrush(Colors.White);
+						dividerGrid.Background = new SolidColorBrush(Colors.Transparent);
 						var eventViewModel = (EventGridEventViewModel)args.Data.GetData(typeof(EventGridEventViewModel))!;
 						var eventDataModel = eventViewModel.EventDataModel;
 						var duration = eventDataModel.EndTime - eventDataModel.StartTime;
@@ -99,7 +101,7 @@ namespace OneTooCalendar
 						eventDataModel.EndTime = newEndTime;
 						applyEditsAndRefresh.Invoke(eventDataModel);
 					};
-					dividerGrid.Background = new SolidColorBrush(Colors.White);
+					dividerGrid.Background = new SolidColorBrush(Colors.Transparent);
 				}
 				else
 				{
@@ -109,6 +111,8 @@ namespace OneTooCalendar
 					};
 					nonDividerGrid.SetValue(Grid.RowProperty, i);
 					nonDividerGrid.SetValue(Grid.ColumnSpanProperty, columnsNeeded);
+					nonDividerGrid.VerticalAlignment = VerticalAlignment.Stretch;
+					nonDividerGrid.HorizontalAlignment = HorizontalAlignment.Stretch;
 					eventGrid.Children.Add(nonDividerGrid);
 					nonDividerGrid.AllowDrop = true;
 					nonDividerGrid.DragOver += (sender, args) =>
@@ -120,12 +124,12 @@ namespace OneTooCalendar
 					};
 					nonDividerGrid.DragLeave += (sender, args) =>
 					{
-						nonDividerGrid.Background = new SolidColorBrush(Colors.White);
+						nonDividerGrid.Background = new SolidColorBrush(Colors.Transparent);
 					};
 					var blockIndex = i;
 					nonDividerGrid.Drop += (sender, args) =>
 					{
-						nonDividerGrid.Background = new SolidColorBrush(Colors.White);
+						nonDividerGrid.Background = new SolidColorBrush(Colors.Transparent);
 						var eventViewModel = (EventGridEventViewModel)args.Data.GetData(typeof(EventGridEventViewModel))!;
 						var eventDataModel = eventViewModel.EventDataModel;
 						var duration = eventDataModel.EndTime - eventDataModel.StartTime;
@@ -135,7 +139,7 @@ namespace OneTooCalendar
 						eventDataModel.EndTime = newEndTime;
 						applyEditsAndRefresh.Invoke(eventDataModel);
 					};
-					nonDividerGrid.Background = new SolidColorBrush(Colors.White);
+					nonDividerGrid.Background = new SolidColorBrush(Colors.Transparent);
 				}
 			}
 

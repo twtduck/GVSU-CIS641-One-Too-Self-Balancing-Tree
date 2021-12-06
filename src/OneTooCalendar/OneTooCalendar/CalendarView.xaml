@@ -44,8 +44,8 @@
         </Grid>
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="5*" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <ContentPresenter Content="{Binding CalendarWeekViewModel}" Grid.Column="0"/>
             <ContentPresenter Content="{Binding BacklogViewModel}" Grid.Column="1"/>

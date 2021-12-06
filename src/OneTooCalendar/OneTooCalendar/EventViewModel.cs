@@ -20,9 +20,7 @@ namespace OneTooCalendar
 
 		private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
-			// var startBlock = (int)GetValue(Grid.RowProperty);
 			DragDrop.DoDragDrop(this, this, DragDropEffects.Move);
-			// DragDropHelper.OnEventGridEventMouseDown(this, startBlock, e);
 		}
 
 		public void Dispose()

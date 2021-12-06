@@ -58,6 +58,10 @@
             <DataTemplate DataType="{x:Type local:ColorViewModel}">
                 <local:ColorView />
             </DataTemplate>
+            
+            <DataTemplate DataType="{x:Type local:BacklogEventViewModel}">
+                <local:BacklogEventView />
+            </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
