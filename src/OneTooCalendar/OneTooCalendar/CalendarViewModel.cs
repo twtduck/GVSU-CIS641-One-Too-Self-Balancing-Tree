@@ -1,10 +1,18 @@
 using System;
+using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 
 namespace OneTooCalendar
 {
-	public delegate void ApplyEditsAndRefresh(IEventDataModel eventDataModel);
-	
+	public enum EventMovementType
+	{
+		OnCalendar,
+		ToBacklog,
+		FromBacklog
+	}
+	public delegate void ApplyEditsAndRefresh(IEventDataModel eventDataModel, EventMovementType eventMovementType, Action afterRefreshAction);
+
 	public class CalendarViewModel : ViewModelBase, IDisposable
 	{
 		private readonly IEventsApi _eventsApi;
@@ -17,10 +25,31 @@ namespace OneTooCalendar
 			_eventsApi = eventsApi;
 			var eventCommandFactory = new EventCommandFactory(eventsApi, calendarsApi, this);
 			var applyEditsAndRefresh = new ApplyEditsAndRefresh(
-				eventDataModel =>
+				(eventDataModel, eventMovementType, afterRefreshAction) =>
 				{
-					_eventsApi.UpdateEvent(eventDataModel);
-					_calendarWeekViewModel!.StartRefreshEventsForWeekFromCache(_eventsApi, () => { });
+					switch (eventMovementType)
+					{
+						case EventMovementType.OnCalendar:
+							_eventsApi.UpdateEvent(eventDataModel);
+							break;
+						case EventMovementType.ToBacklog:
+							var recreatedToBacklog = GoogleCalendarEventDataModel.RecreateId((GoogleCalendarEventDataModel)eventDataModel);
+							_eventsApi.DeleteEvent(eventDataModel);
+							_backlogViewModel.BacklogEvents.Add(new BacklogEventViewModel(recreatedToBacklog));
+							break;
+						case EventMovementType.FromBacklog:
+							var recreatedFromBacklog = GoogleCalendarEventDataModel.RecreateId((GoogleCalendarEventDataModel)eventDataModel);
+							_eventsApi.AddEvent(recreatedFromBacklog);
+							foreach (var matchingEvent in _backlogViewModel.BacklogEvents.Where(x => x.EventDataModel == eventDataModel).Distinct().ToList())
+							{
+								_backlogViewModel.BacklogEvents.Remove(matchingEvent);
+								Debug.Assert(!_backlogViewModel.BacklogEvents.Any(x => x.EventDataModel == eventDataModel));
+							}
+							break;
+						default:
+							throw new ArgumentOutOfRangeException(nameof(eventMovementType), eventMovementType, null);
+					}
+					_calendarWeekViewModel!.StartRefreshEventsForWeekFromCache(_eventsApi, afterRefreshAction);
 				}
 				);
 			_calendarWeekViewModel = new CalendarWeekViewModel(
@@ -29,7 +58,7 @@ namespace OneTooCalendar
 				applyEditsAndRefresh
 				);
 			UpdateCurrentMonthAndYear();
-			_backlogViewModel = new BacklogViewModel();
+			_backlogViewModel = new BacklogViewModel(applyEditsAndRefresh);
 			PreviousWeekButtonCommand = new OneTooCalendarCommand(
 				_ => CalendarWeekViewModel =
 					new CalendarWeekViewModel(
@@ -52,8 +81,6 @@ namespace OneTooCalendar
 			RefreshButtonCommand = new OneTooCalendarCommand(_ =>
 					OnRefreshButtonClicked()
 				);
-
-			DragDropHelper.InitializeCalendar(this);
 
 			DateTime GetFirstDayOfCurrentWeek()
 			{

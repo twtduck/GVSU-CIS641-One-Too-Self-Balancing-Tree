@@ -91,15 +91,29 @@ namespace OneTooCalendar
 					var blockIndex = i;
 					dividerGrid.Drop += (sender, args) =>
 					{
-						dividerGrid.Background = new SolidColorBrush(Colors.Transparent);
-						var eventViewModel = (EventGridEventViewModel)args.Data.GetData(typeof(EventGridEventViewModel))!;
-						var eventDataModel = eventViewModel.EventDataModel;
-						var duration = eventDataModel.EndTime - eventDataModel.StartTime;
-						var newStartTime = dateMidnight.AddHours(blockIndex / 4).AddMinutes(blockIndex % 4 * 15);
-						var newEndTime = newStartTime.Add(duration);
-						eventDataModel.StartTime = newStartTime;
-						eventDataModel.EndTime = newEndTime;
-						applyEditsAndRefresh.Invoke(eventDataModel);
+						if (args.Data.GetDataPresent(typeof(EventGridEventViewModel)))
+						{
+							dividerGrid.Background = new SolidColorBrush(Colors.Transparent);
+							var eventViewModel = (EventGridEventViewModel)args.Data.GetData(typeof(EventGridEventViewModel))!;
+							var eventDataModel = eventViewModel.EventDataModel;
+							var duration = eventDataModel.EndTime - eventDataModel.StartTime;
+							var newStartTime = dateMidnight.AddHours(blockIndex / 4).AddMinutes(blockIndex % 4 * 15);
+							var newEndTime = newStartTime.Add(duration);
+							eventDataModel.StartTime = newStartTime;
+							eventDataModel.EndTime = newEndTime;
+							applyEditsAndRefresh.Invoke(eventDataModel, EventMovementType.OnCalendar, () => { });
+						}
+						else if (args.Data.GetDataPresent(typeof(BacklogEventViewModel)))
+						{
+							var eventViewModel = (BacklogEventViewModel)args.Data.GetData(typeof(BacklogEventViewModel))!;
+							var eventDataModel = eventViewModel.EventDataModel;
+							var duration = eventViewModel.Duration ?? TimeSpan.FromHours(1);
+							var newStartTime = dateMidnight.AddHours(blockIndex / 4).AddMinutes(blockIndex % 4 * 15);
+							var newEndTime = newStartTime.Add(duration);
+							eventDataModel.StartTime = newStartTime;
+							eventDataModel.EndTime = newEndTime;
+							applyEditsAndRefresh.Invoke(eventDataModel, EventMovementType.FromBacklog, () => { });
+						}
 					};
 					dividerGrid.Background = new SolidColorBrush(Colors.Transparent);
 				}
@@ -117,7 +131,7 @@ namespace OneTooCalendar
 					nonDividerGrid.AllowDrop = true;
 					nonDividerGrid.DragOver += (sender, args) =>
 					{
-						if (args.Data.GetDataPresent(typeof(EventGridEventViewModel)))
+						if (args.Data.GetDataPresent(typeof(EventGridEventViewModel)) || args.Data.GetDataPresent(typeof(BacklogEventViewModel)))
 						{
 							nonDividerGrid.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFE0E0E0"));
 						}
@@ -130,14 +144,28 @@ namespace OneTooCalendar
 					nonDividerGrid.Drop += (sender, args) =>
 					{
 						nonDividerGrid.Background = new SolidColorBrush(Colors.Transparent);
-						var eventViewModel = (EventGridEventViewModel)args.Data.GetData(typeof(EventGridEventViewModel))!;
-						var eventDataModel = eventViewModel.EventDataModel;
-						var duration = eventDataModel.EndTime - eventDataModel.StartTime;
-						var newStartTime = dateMidnight.AddHours(blockIndex / 4).AddMinutes(blockIndex % 4 * 15);
-						var newEndTime = newStartTime.Add(duration);
-						eventDataModel.StartTime = newStartTime;
-						eventDataModel.EndTime = newEndTime;
-						applyEditsAndRefresh.Invoke(eventDataModel);
+						if (args.Data.GetDataPresent(typeof(EventGridEventViewModel)))
+						{
+							var eventViewModel = (EventGridEventViewModel)args.Data.GetData(typeof(EventGridEventViewModel))!;
+							var eventDataModel = eventViewModel.EventDataModel;
+							var duration = eventDataModel.EndTime - eventDataModel.StartTime;
+							var newStartTime = dateMidnight.AddHours(blockIndex / 4).AddMinutes(blockIndex % 4 * 15);
+							var newEndTime = newStartTime.Add(duration);
+							eventDataModel.StartTime = newStartTime;
+							eventDataModel.EndTime = newEndTime;
+							applyEditsAndRefresh.Invoke(eventDataModel, EventMovementType.OnCalendar, () => { });
+						}
+						else if (args.Data.GetDataPresent(typeof(BacklogEventViewModel)))
+						{
+							var eventViewModel = (BacklogEventViewModel)args.Data.GetData(typeof(BacklogEventViewModel))!;
+							var eventDataModel = eventViewModel.EventDataModel;
+							var duration = eventViewModel.Duration ?? TimeSpan.FromHours(1);
+							var newStartTime = dateMidnight.AddHours(blockIndex / 4).AddMinutes(blockIndex % 4 * 15);
+							var newEndTime = newStartTime.Add(duration);
+							eventDataModel.StartTime = newStartTime;
+							eventDataModel.EndTime = newEndTime;
+							applyEditsAndRefresh.Invoke(eventDataModel, EventMovementType.FromBacklog, () => { });
+						}
 					};
 					nonDividerGrid.Background = new SolidColorBrush(Colors.Transparent);
 				}

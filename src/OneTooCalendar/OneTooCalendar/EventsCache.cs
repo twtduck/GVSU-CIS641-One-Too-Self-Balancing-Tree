@@ -23,9 +23,14 @@ namespace OneTooCalendar
 
 		public void DeleteEvent(IEventDataModel eventDataModel)
 		{
-			EventsToDeleteOnNextSync.Add(eventDataModel);
-			EventsToAddOnNextSync.Remove(eventDataModel);
+			if (EventsToAddOnNextSync.Contains(eventDataModel))
+				EventsToAddOnNextSync.Remove(eventDataModel);
+			else
+				EventsToDeleteOnNextSync.Add(eventDataModel);
 			EventsToUpdateOnNextSync.Remove(eventDataModel);
+
+			Debug.Assert(!EventsToAddOnNextSync.Contains(eventDataModel));
+			Debug.Assert(!EventsToUpdateOnNextSync.Contains(eventDataModel));
 			foreach (var weekEventCacheEntry in WeekEventCacheEntries)
 				weekEventCacheEntry.Value.Remove(eventDataModel);
 		}
@@ -41,8 +46,14 @@ namespace OneTooCalendar
 
 		public void UpdateEvent(IEventDataModel eventDataModel)
 		{
-			EventsToUpdateOnNextSync.Add(eventDataModel);
+			if (EventsToAddOnNextSync.Contains(eventDataModel))
+				return;
+
+			if (!EventsToUpdateOnNextSync.Contains(eventDataModel))
+				EventsToUpdateOnNextSync.Add(eventDataModel);
+
 			Debug.Assert(!EventsToDeleteOnNextSync.Contains(eventDataModel));
+			Debug.Assert(!EventsToAddOnNextSync.Contains(eventDataModel));
 		}
 
 		public Task<IList<IEventDataModel>?> TryGetWeekEventsAsync(DateTime weekStart, CancellationToken token)

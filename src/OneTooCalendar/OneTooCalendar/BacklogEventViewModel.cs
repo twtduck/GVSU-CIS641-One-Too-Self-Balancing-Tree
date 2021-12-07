@@ -14,6 +14,6 @@ namespace OneTooCalendar
 
 		public string Title => EventDataModel.Title;
 		public SolidColorBrush Color => new SolidColorBrush(EventDataModel.Color);
-		public TimeSpan Duration => EventDataModel?.EndTime - EventDataModel?.StartTime ?? TimeSpan.FromHours(1);
+		public TimeSpan? Duration { get; set; }
 	}
 }

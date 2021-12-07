@@ -1,4 +1,6 @@
-﻿using System.Windows.Controls;
+﻿using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace OneTooCalendar
 {
@@ -7,6 +9,12 @@ namespace OneTooCalendar
 		public BacklogEventView()
 		{
 			InitializeComponent();
+			MouseLeftButtonDown += OnMouseLeftButtonDown;
+		}
+
+		private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+		{
+			DragDrop.DoDragDrop(this, (BacklogEventViewModel)DataContext, DragDropEffects.Move);
 		}
 	}
 }

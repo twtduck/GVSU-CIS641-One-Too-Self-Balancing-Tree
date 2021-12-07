@@ -8,10 +8,12 @@ namespace OneTooCalendar
 {
 	public class BacklogViewModel : ViewModelBase
 	{
+		private readonly ApplyEditsAndRefresh _applyEditsAndRefresh;
 		private bool _isDropTarget;
 
-		public BacklogViewModel()
+		public BacklogViewModel(ApplyEditsAndRefresh applyEditsAndRefresh)
 		{
+			_applyEditsAndRefresh = applyEditsAndRefresh;
 			AddBacklogEventCommand = new OneTooCalendarCommand(_ => AddBacklogEvent());
 		}
 
@@ -56,7 +58,7 @@ namespace OneTooCalendar
 			if (args.Data.GetDataPresent(typeof(EventGridEventViewModel)))
 			{
 				var droppedEventGridEvent = (EventGridEventViewModel)args.Data.GetData(typeof(EventGridEventViewModel));
-				BacklogEvents.Add(new BacklogEventViewModel(droppedEventGridEvent.EventDataModel));
+				_applyEditsAndRefresh.Invoke(droppedEventGridEvent.EventDataModel, EventMovementType.ToBacklog, () => { });
 				OnPropertyChanged(nameof(EventsListVisibility));
 				OnPropertyChanged(nameof(EmptyEventsListLabelVisibility));
 			}

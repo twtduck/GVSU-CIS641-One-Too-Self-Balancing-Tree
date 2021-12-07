@@ -22,6 +22,23 @@ namespace OneTooCalendar
 		public string EventId { get; set; } = Guid.NewGuid().ToString();
 		public bool EventIdIsTemporary { get; set; } = true;
 		public int? CustomEventColorId { get; set; }
-		public Event SourceEvent { get; init; } = null!;
+		public Event? SourceEvent { get; init; }
+
+		public static GoogleCalendarEventDataModel RecreateId(GoogleCalendarEventDataModel eventDataModel)
+		{
+			var newEvent = new GoogleCalendarEventDataModel(eventDataModel.Calendar)
+			{
+				AllDayEvent = eventDataModel.AllDayEvent,
+				StartTime = eventDataModel.StartTime,
+				EndTime = eventDataModel.EndTime,
+				Title = eventDataModel.Title,
+				Location = eventDataModel.Location,
+				Description = eventDataModel.Description,
+				CustomEventColorId = eventDataModel.CustomEventColorId,
+				EventId = Guid.NewGuid().ToString(),
+				EventIdIsTemporary = true
+			};
+			return newEvent;
+		}
 	}
 }
