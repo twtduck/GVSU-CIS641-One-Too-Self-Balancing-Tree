@@ -14,7 +14,7 @@ namespace OneTooCalendar
 		public BacklogViewModel(ApplyEditsAndRefresh applyEditsAndRefresh)
 		{
 			_applyEditsAndRefresh = applyEditsAndRefresh;
-			AddBacklogEventCommand = new OneTooCalendarCommand(_ => AddBacklogEvent());
+			AddBacklogEventCommand = new OneTooCalendarCommand(_ => AddBacklogEvent(), enabled: false);
 		}
 
 		private void AddBacklogEvent()
