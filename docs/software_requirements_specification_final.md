@@ -55,11 +55,12 @@ interactions between actors and the system.
 
 # Change Management Plan
 
-Bringing this tool into your organization is meant to be simple and easy. For training, all that should be needed is a basic
-knowledge of Google Calendar and maybe a quick perusal of the README.md file. Organizations could also request a short webinar (less than an hour long)
-to get a better understanding of the application and its uses. To make distribution and integration with people's existing systems easier, a self-contained
-installer (including the required runtime and program files) should be developed. The github repository will remain public for the lifetime of the project, 
-as it will not only be used for releasing updates, but also to give users a place they may report issues and get help or updates that fix them.
+Bringing this tool into your organization is meant to be simple and easy. Organizations should present it as an alternative to using Google Calendar, 
+and adoption should happen organically. For training, all that should be needed is a basic knowledge of Google Calendar and maybe a quick perusal of the 
+README.md file. Organizations could also request a short webinar (less than an hour long) to get a better understanding of the application and its uses. 
+To make distribution and integration with people's existing systems easier, a self-contained installer (including the required runtime and program files) 
+should be developed. The github repository will remain public for the lifetime of the project, as it will not only be used for releasing updates, but 
+also to give users a place they may report issues and get help or updates that fix them.
 
 # Traceability Links
 
